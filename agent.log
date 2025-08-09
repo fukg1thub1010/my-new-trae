@@ -1,0 +1,32 @@
+nohup: ignoring input
+Traceback (most recent call last):
+  File "/home/hidden/Desktop/trae-agent/trae-agent-trae-agent/trae_agent/ide_foundry/agent_conductor/agent_main.py", line 22, in <module>
+    from trae_agent.ide_foundry.agent_conductor.agent_service_pb2_grpc import (
+    ...<2 lines>...
+    )
+  File "/home/hidden/Desktop/trae-agent/trae-agent-trae-agent/trae_agent/ide_foundry/agent_conductor/agent_service_pb2_grpc.py", line 6, in <module>
+    from trae_agent.ide_foundry.agent_conductor import agent_service_pb2 as trae__agent_dot_ide__foundry_dot_agent__conductor_dot_agent__service__pb2
+  File "/home/hidden/Desktop/trae-agent/trae-agent-trae-agent/trae_agent/ide_foundry/agent_conductor/agent_service_pb2.py", line 12, in <module>
+    _runtime_version.ValidateProtobufRuntimeVersion(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        _runtime_version.Domain.PUBLIC,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        'trae_agent/ide_foundry/agent_conductor/agent_service.proto'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/hidden/.local/lib/python3.13/site-packages/google/protobuf/runtime_version.py", line 106, in ValidateProtobufRuntimeVersion
+    _ReportVersionError(
+    ~~~~~~~~~~~~~~~~~~~^
+        'Detected mismatched Protobuf Gencode/Runtime major versions when'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        f' loading {location}: gencode {gen_version} runtime {version}.'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        f' Same major version is required. {error_prompt}'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/hidden/.local/lib/python3.13/site-packages/google/protobuf/runtime_version.py", line 50, in _ReportVersionError
+    raise VersionError(msg)
+google.protobuf.runtime_version.VersionError: Detected mismatched Protobuf Gencode/Runtime major versions when loading trae_agent/ide_foundry/agent_conductor/agent_service.proto: gencode 6.31.1 runtime 5.29.5. Same major version is required. See Protobuf version guarantees at https://protobuf.dev/support/cross-version-runtime-guarantee.

@@ -1,0 +1,487 @@
+agents:
+  trae_agent:
+    enable_lakeview: false
+    model: trae_agent_model
+    max_steps: 200
+    tools:
+    - bash
+    - str_replace_based_edit_tool
+    - sequentialthinking
+    - task_done
+allow_mcp_servers: []
+mcp_servers:
+  playwright:
+    command: npx
+    args:
+    - '@playwright/mcp@0.0.27'
+  1mcp_agent:
+    command: npx
+    args:
+    - -y
+    - '@1mcp/agent'
+    description: Unified MCP server that aggregates multiple MCP servers into one
+  mcpjungle:
+    command: npx
+    args:
+    - mcp-remote
+    - http://localhost:8080/mcp
+    - --allow-http
+    description: Self-hosted MCP Server registry for enterprise AI Agents
+  mcpmcp_server:
+    command: npx
+    args:
+    - '@glenngillen/mcpmcp-server'
+    description: List of MCP servers for workflow improvement
+  imagen3_mcp:
+    command: imagen3-mcp
+    env:
+      GEMINI_API_KEY: ''
+    description: Google Imagen 3.0 image generation MCP server
+  anyquery:
+    command: anyquery
+    args:
+    - mcp
+    - --stdio
+    description: Query 40+ apps with SQL using SQLite-compatible database
+  metamcp:
+    url: http://localhost:12008/metamcp//sse
+    description: MCP aggregator, orchestrator, middleware, and gateway
+  magg:
+    command: npx
+    args:
+    - '@sitbon/magg'
+    description: Meta-MCP server that acts as universal hub for autonomous server
+      discovery
+  openai_gpt_image_mcp:
+    command: npx
+    args:
+    - '@SureScaleAI/openai-gpt-image-mcp'
+    description: OpenAI GPT image generation/editing MCP server
+  mcp_access_point:
+    command: npx
+    args:
+    - '@sxhxliang/mcp-access-point'
+    description: Turn web service into MCP server in one click without code changes
+  mcpx:
+    command: npx
+    args:
+    - '@TheLunarCompany/lunar#mcpx'
+    description: Production-ready gateway to manage MCP servers at scale
+  mcgravity:
+    command: npx
+    args:
+    - '@tigranbs/mcgravity'
+    description: Proxy tool for composing multiple MCP servers into unified endpoint
+  pluggedin_mcp_proxy:
+    command: npx
+    args:
+    - '@VeriTeknik/pluggedin-mcp-proxy'
+    description: Comprehensive proxy server combining multiple MCP servers
+  waystation_mcp:
+    command: npx
+    args:
+    - '@waystation-ai/mcp'
+    description: Connect Claude Desktop to favorite apps (Notion, Slack, etc.)
+  open_mcp:
+    command: npx
+    args:
+    - '@wegotdocs/open-mcp'
+    description: Turn web APIs into MCP servers in 10 seconds
+  mcp_server_templates:
+    command: npx
+    args:
+    - '@Data-Everything/mcp-server-templates'
+    description: Unified MCP platform connecting multiple apps and services
+  mindsdb:
+    command: python
+    args:
+    - -m
+    - mindsdb
+    description: AI database platform with MCP capabilities
+  mcp_open_library:
+    command: npx
+    args:
+    - '@8enSmith/mcp-open-library'
+    description: MCP server for Open Library API - search book information
+  manim_mcp_server:
+    command: npx
+    args:
+    - '@abhiemj/manim-mcp-server'
+    description: Local MCP server for generating animations using Manim
+  blender_mcp:
+    command: npx
+    args:
+    - '@ahujasid/blender-mcp'
+    description: MCP server for working with Blender
+  video_editing_mcp:
+    command: npx
+    args:
+    - '@burningion/video-editing-mcp'
+    description: Video editing MCP for Video Jungle Collection
+  bazi_mcp:
+    command: npx
+    args:
+    - bazi-mcp
+    description: Chinese Astrology (Bazi) charting and analysis MCP server
+  discogs_mcp_server:
+    command: npx
+    args:
+    - '@cswkim/discogs-mcp-server'
+    description: MCP server for Discogs API interaction
+  aseprite_mcp:
+    command: npx
+    args:
+    - '@diivi/aseprite-mcp'
+    description: MCP server using Aseprite API to create pixel art
+  quran_mcp_server:
+    command: npx
+    args:
+    - '@djalal/quran-mcp-server'
+    description: MCP server for Quran.com corpus via REST API v4
+  metmuseum_mcp:
+    command: npx
+    args:
+    - '@mikechao/metmuseum-mcp'
+    description: Metropolitan Museum of Art Collection API integration
+  anilist_mcp:
+    command: npx
+    args:
+    - '@yuna0x0/anilist-mcp'
+    description: MCP server integrating AniList API for anime and manga information
+  biomcp:
+    command: npx
+    args:
+    - '@genomoncology/biomcp'
+    description: Biomedical research MCP server for PubMed, ClinicalTrials.gov, MyVariant.info
+  biothings_mcp:
+    command: npx
+    args:
+    - '@longevity-genie/biothings-mcp'
+    description: MCP server for BioThings API - genes, variants, drugs, taxonomic
+      info
+  gget_mcp:
+    command: npx
+    args:
+    - '@longevity-genie/gget-mcp'
+    description: Bioinformatics toolkit MCP server for genomics queries and analysis
+  opengenes_mcp:
+    command: npx
+    args:
+    - '@longevity-genie/opengenes-mcp'
+    description: MCP server for aging and longevity research database from OpenGenes
+  synergy_age_mcp:
+    command: npx
+    args:
+    - '@longevity-genie/synergy-age-mcp'
+    description: MCP server for SynergyAge database of genetic interactions in longevity
+  fhir_mcp_server:
+    command: npx
+    args:
+    - '@wso2/fhir-mcp-server'
+    description: FHIR API MCP server for healthcare data integration
+  medical_mcp:
+    command: npx
+    args:
+    - '@JamesANZ/medical-mcp'
+    description: Medical information and drug database MCP server
+  mcp_server_browser:
+    command: npx
+    args:
+    - '@agent-infra/mcp-server-browser'
+    description: Browser automation using Puppeteer with local and remote browser
+      support
+  mcp_server_playwright:
+    command: npx
+    args:
+    - '@automatalabs/mcp-server-playwright'
+    description: Browser automation MCP server using Playwright
+  browserbase_server:
+    command: npx
+    args:
+    - '@browserbasehq/mcp-server-browserbase'
+    env:
+      BROWSERBASE_API_KEY: ''
+      BROWSERBASE_PROJECT_ID: ''
+      GEMINI_API_KEY: ''
+    description: Cloud browser automation using Browserbase and Stagehand
+  browsermcp:
+    command: npx
+    args:
+    - '@browsermcp/mcp'
+    description: Automate local Chrome browser
+  bilibili_mcp_js:
+    command: npx
+    args:
+    - '@34892002/bilibili-mcp-js'
+    description: MCP server for Bilibili content search
+  playwright_plus_python_mcp:
+    command: npx
+    args:
+    - '@blackwhite084/playwright-plus-python-mcp'
+    description: Python MCP server using Playwright for browser automation
+  browser_use_mcp_server:
+    command: npx
+    args:
+    - '@co-browser/browser-use-mcp-server'
+    description: Browser-use packaged as MCP server with SSE transport
+  yutu:
+    command: yutu
+    args: []
+    description: Cross-platform browser automation tool
+  aws_mcp_server:
+    command: npx
+    args:
+    - '@aws/mcp-server'
+    env:
+      AWS_ACCESS_KEY_ID: ''
+      AWS_SECRET_ACCESS_KEY: ''
+      AWS_REGION: ''
+    description: AWS services MCP server
+  gcp_mcp_server:
+    command: npx
+    args:
+    - '@gcp/mcp-server'
+    env:
+      GOOGLE_APPLICATION_CREDENTIALS: ''
+    description: Google Cloud Platform MCP server
+  azure_mcp_server:
+    command: npx
+    args:
+    - '@azure/mcp-server'
+    env:
+      AZURE_CLIENT_ID: ''
+      AZURE_CLIENT_SECRET: ''
+      AZURE_TENANT_ID: ''
+    description: Microsoft Azure MCP server
+  cloudflare_mcp_server:
+    command: npx
+    args:
+    - '@cloudflare/mcp-server'
+    env:
+      CLOUDFLARE_API_TOKEN: ''
+    description: Cloudflare services MCP server
+  codeinterpreter_mcp_server:
+    command: npx
+    args:
+    - '@codeinterpreter/mcp-server'
+    description: Code execution MCP server with multiple language support
+  jupyter_mcp_server:
+    command: npx
+    args:
+    - '@jupyter/mcp-server'
+    description: Jupyter notebook MCP server
+  python_mcp_server:
+    command: npx
+    args:
+    - '@python/mcp-server'
+    description: Python code execution MCP server
+  github_copilot_mcp:
+    command: npx
+    args:
+    - '@github/copilot-mcp'
+    env:
+      GITHUB_TOKEN: ''
+    description: GitHub Copilot MCP server
+  cursor_mcp_server:
+    command: npx
+    args:
+    - '@cursor/mcp-server'
+    description: Cursor IDE MCP server
+  shell_mcp_server:
+    command: npx
+    args:
+    - '@shell/mcp-server'
+    description: Shell command execution MCP server
+  docker_mcp_server:
+    command: npx
+    args:
+    - '@docker/mcp-server'
+    description: Docker container management MCP server
+  kubernetes_mcp_server:
+    command: npx
+    args:
+    - '@kubernetes/mcp-server'
+    env:
+      KUBECONFIG: ''
+    description: Kubernetes cluster management MCP server
+  slack_mcp_server:
+    command: npx
+    args:
+    - '@slack/mcp-server'
+    env:
+      SLACK_BOT_TOKEN: ''
+    description: Slack communication MCP server
+  discord_mcp_server:
+    command: npx
+    args:
+    - '@discord/mcp-server'
+    env:
+      DISCORD_BOT_TOKEN: ''
+    description: Discord communication MCP server
+  postgresql_mcp_server:
+    command: npx
+    args:
+    - '@postgresql/mcp-server'
+    env:
+      DATABASE_URL: ''
+    description: PostgreSQL database MCP server
+  mysql_mcp_server:
+    command: npx
+    args:
+    - '@mysql/mcp-server'
+    env:
+      DATABASE_URL: ''
+    description: MySQL database MCP server
+  mongodb_mcp_server:
+    command: npx
+    args:
+    - '@mongodb/mcp-server'
+    env:
+      MONGODB_URI: ''
+    description: MongoDB database MCP server
+  redis_mcp_server:
+    command: npx
+    args:
+    - '@redis/mcp-server'
+    env:
+      REDIS_URL: ''
+    description: Redis cache MCP server
+  snowflake_mcp_server:
+    command: npx
+    args:
+    - '@snowflake/mcp-server'
+    env:
+      SNOWFLAKE_ACCOUNT: ''
+      SNOWFLAKE_USER: ''
+      SNOWFLAKE_PASSWORD: ''
+      SNOWFLAKE_WAREHOUSE: ''
+    description: Snowflake data warehouse MCP server
+  bigquery_mcp_server:
+    command: npx
+    args:
+    - '@bigquery/mcp-server'
+    env:
+      GOOGLE_APPLICATION_CREDENTIALS: ''
+    description: Google BigQuery MCP server
+  notion_mcp_server:
+    command: npx
+    args:
+    - '@notion/mcp-server'
+    env:
+      NOTION_TOKEN: ''
+    description: Notion workspace MCP server
+  obsidian_mcp_server:
+    command: npx
+    args:
+    - '@obsidian/mcp-server'
+    description: Obsidian notes MCP server
+  google_maps_mcp_server:
+    command: npx
+    args:
+    - '@google/maps-mcp-server'
+    env:
+      GOOGLE_MAPS_API_KEY: ''
+    description: Google Maps services MCP server
+  google_search_mcp_server:
+    command: npx
+    args:
+    - '@google/search-mcp-server'
+    env:
+      GOOGLE_SEARCH_API_KEY: ''
+      GOOGLE_SEARCH_ENGINE_ID: ''
+    description: Google Search MCP server
+  scrape_mcp_server:
+    command: npx
+    args:
+    - '@scrape/mcp-server'
+    description: Web scraping MCP server
+  twitter_mcp_server:
+    command: npx
+    args:
+    - '@twitter/mcp-server'
+    env:
+      TWITTER_BEARER_TOKEN: ''
+    description: Twitter/X API MCP server
+  reddit_mcp_server:
+    command: npx
+    args:
+    - '@reddit/mcp-server'
+    env:
+      REDDIT_CLIENT_ID: ''
+      REDDIT_CLIENT_SECRET: ''
+    description: Reddit API MCP server
+  git_mcp_server:
+    command: npx
+    args:
+    - '@git/mcp-server'
+    description: Git version control MCP server
+  github_mcp_server:
+    command: npx
+    args:
+    - '@github/mcp-server'
+    env:
+      GITHUB_TOKEN: ''
+    description: GitHub API MCP server
+  jira_mcp_server:
+    command: npx
+    args:
+    - '@jira/mcp-server'
+    env:
+      JIRA_URL: ''
+      JIRA_USERNAME: ''
+      JIRA_API_TOKEN: ''
+    description: Jira project management MCP server
+  trello_mcp_server:
+    command: npx
+    args:
+    - '@trello/mcp-server'
+    env:
+      TRELLO_API_KEY: ''
+      TRELLO_TOKEN: ''
+    description: Trello project management MCP server
+  weather_mcp_server:
+    command: npx
+    args:
+    - '@weather/mcp-server'
+    env:
+      WEATHER_API_KEY: ''
+    description: Weather information MCP server
+  news_mcp_server:
+    command: npx
+    args:
+    - '@news/mcp-server'
+    env:
+      NEWS_API_KEY: ''
+    description: News articles MCP server
+  calendar_mcp_server:
+    command: npx
+    args:
+    - '@calendar/mcp-server'
+    env:
+      GOOGLE_CALENDAR_API_KEY: ''
+    description: Calendar management MCP server
+model_providers:
+  pollinations:https://text.pollinations.ai/openai:
+    api_key: ${POLLINATIONS_API_KEY}
+    provider: pollinations
+    base_url: https://text.pollinations.ai/openai
+models:
+  trae_agent_model:
+    model_provider: pollinations:https://text.pollinations.ai/openai
+    model: deepseek-reasoning
+    max_tokens: 4096
+    temperature: 0.5
+    top_p: 1
+    top_k: 0
+    max_retries: 1
+    parallel_tool_calls: false
+    supports_tool_calling: false
+  lakeview_model:
+    model_provider: pollinations:https://text.pollinations.ai/openai
+    model: deepseek-reasoning
+    max_tokens: 2048
+    temperature: 0.5
+    top_p: 1
+    top_k: 0
+    max_retries: 10
+    parallel_tool_calls: true
