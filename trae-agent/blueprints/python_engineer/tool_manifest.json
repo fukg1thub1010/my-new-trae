@@ -1,0 +1,64 @@
+{
+  "allowed_tools": [
+    {
+      "tool_name": "KnowledgeForgeTool",
+      "allowed_actions": ["create_custom_kb", "ingest_directory", "ingest_url_list", "get_ingestion_status", "delete_custom_kb"]
+    },
+    {
+      "tool_name": "DeepResearchTool",
+      "allowed_actions": ["conduct_research", "analyze_sources", "synthesize_findings", "generate_report"]
+    },
+    {
+      "tool_name": "CommandInterpreterMapper",
+      "allowed_actions": ["execute_command", "map_new_command", "list_custom_commands", "delete_custom_command"]
+    },
+    {
+      "tool_name": "AgentBlueprintDesigner",
+      "allowed_actions": ["create_blueprint", "update_blueprint", "get_blueprint", "delete_blueprint", "list_blueprints"]
+    },
+    {
+      "tool_name": "TeamFormationStrategist",
+      "allowed_actions": ["form_team", "get_team_status", "set_team_directive", "disband_team"]
+    },
+    {
+      "tool_name": "TeamCommunicator",
+      "allowed_actions": ["send_team_message", "check_team_messages", "join_team_channel"]
+    },
+    {
+      "tool_name": "SituationalAwarenessMatrix",
+      "allowed_actions": ["list_active_agents", "get_agent_status", "get_agent_logs", "get_system_resource_usage", "list_active_projects"]
+    },
+    {
+      "tool_name": "ProgrammaticInteractionTool",
+      "allowed_actions": ["click_element", "set_text", "send_keystrokes", "drag_and_drop", "send_mcp_command"]
+    },
+    {
+      "tool_name": "SelfRefineLoop",
+      "allowed_actions": ["diagnose_failure", "generate_repair", "store_lesson", "retrieve_lessons", "construct_meta_prompt"]
+    },
+    {
+      "tool_name": "CodeExecutionTool",
+      "allowed_actions": ["execute_python", "execute_node", "execute_bash", "get_session_status", "cleanup_session"]
+    },
+    {
+      "tool_name": "InputTool",
+      "allowed_actions": ["send_input", "get_input_history", "clear_input_buffer"]
+    },
+    {
+      "tool_name": "SearchEngineTool",
+      "allowed_actions": ["search", "get_search_results", "clear_cache"]
+    },
+    {
+      "tool_name": "ForensicDiagnosticsTool",
+      "allowed_actions": ["diagnose_system", "analyze_logs", "check_integrity", "generate_report"]
+    },
+    {
+      "tool_name": "PerformanceAuditor",
+      "allowed_actions": ["audit_performance", "analyze_metrics", "generate_report"]
+    }
+  ],
+  "restricted_tools": [],
+  "default_permissions": "allow",
+  "max_concurrent_tools": 10,
+  "timeout_seconds": 300
+}
