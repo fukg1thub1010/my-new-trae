@@ -46,7 +46,8 @@ source .venv/bin/activate
 
 # Install the package in development mode
 echo -e "${GREEN}📥 Installing Trae Agent in development mode...${NC}"
-uv pip install -e .[all]
+uv pip install -e .
+uv pip install -e .[dev]
 
 # Install system dependencies for Linux
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
