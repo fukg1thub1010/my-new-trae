@@ -4,6 +4,11 @@ from .base import Tool
 _tool_registry: Dict[str, Type[Tool]] = {}
 
 def register_tool(tool_class: Type[Tool]):
+    """
+    Register a tool.
+
+    Note: This function instantiates the tool class to get its name.
+    """
     tool_name = tool_class().get_name()
     _tool_registry[tool_name] = tool_class
 
