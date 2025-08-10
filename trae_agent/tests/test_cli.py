@@ -115,7 +115,6 @@ class TestCli(unittest.TestCase):
 
     @patch("trae_agent.cli.resolve_config_file", return_value="test_config.yaml")
     @patch("trae_agent.cli.Agent")
-    @patch("trae_agent.cli.Config.create")
     @patch("trae_agent.cli.TrajectoryRecorder")
     @patch("trae_agent.cli.ConsoleFactory.create_console")
     @patch("trae_agent.cli.os.chdir", side_effect=FileNotFoundError("No such file or directory"))
@@ -124,22 +123,10 @@ class TestCli(unittest.TestCase):
         mock_chdir,
         mock_create_console,
         mock_trajectory_recorder,
-        mock_config_create,
         mock_agent_class,
         mock_resolve_config_file,
     ):
         """Test for a clear error when --working-dir points to a non-existent directory."""
-        # Setup mocks
-        mock_config = MagicMock()
-        mock_config.trae_agent = MagicMock()
-        mock_config_create.return_value.resolve_config_values.return_value = mock_config
-        mock_agent = MagicMock()
-        mock_agent_class.return_value = mock_agent
-        mock_console = MagicMock()
-        mock_console.set_initial_task = MagicMock()
-        mock_console.set_agent_context = MagicMock()
-        mock_create_console.return_value = mock_console
-
         result = self.runner.invoke(
             cli, ["run", "some task", "--working-dir", "/path/to/nonexistent/dir"]
         )

@@ -10,5 +10,5 @@ def register_tool(tool_class: Type[Tool]):
 def list_tools():
     return list(_tool_registry.keys())
 
-def get_tool(tool_name: str) -> Type[Tool]:
-    return _tool_registry[tool_name]
+def get_tool(tool_name: str) -> Tool:
+    return _tool_registry[tool_name]()
