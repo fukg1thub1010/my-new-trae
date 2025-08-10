@@ -46,11 +46,7 @@ source .venv/bin/activate
 
 # Install the package in development mode
 echo -e "${GREEN}📥 Installing Trae Agent in development mode...${NC}"
-uv pip install -e .
-
-# Install additional dependencies
-echo -e "${GREEN}📦 Installing additional dependencies...${NC}"
-uv pip install -r requirements.txt
+uv pip install -e .[all]
 
 # Install system dependencies for Linux
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
@@ -68,7 +64,7 @@ mkdir -p ~/.trae_agent/knowledge
 
 # Run tests to validate setup
 echo -e "${GREEN}🧪 Running validation tests...${NC}"
-if uv run pytest tests/ -v --tb=short; then
+if uv run pytest -v --tb=short; then
     echo -e "${GREEN}✅ All tests passed!${NC}"
 else
     echo -e "${YELLOW}⚠️  Some tests failed, but setup completed${NC}"

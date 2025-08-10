@@ -7,10 +7,12 @@ import click
 class ConsoleFactory:
     @staticmethod
     def create_console():
-        mock_console = MagicMock()
-        mock_console.set_initial_task = MagicMock()
-        mock_console.set_agent_context = MagicMock()
-        return mock_console
+        class Console:
+            def set_initial_task(self, task):
+                pass
+            def set_agent_context(self, agent):
+                pass
+        return Console()
 
 def resolve_config_file(config_file):
     if not config_file:
