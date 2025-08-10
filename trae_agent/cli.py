@@ -67,7 +67,7 @@ def run(task, file, working_dir, config_file):
     """Run a task"""
     if not task and not file:
         click.echo("Error: Config file not found.", err=True)
-        return
+        raise click.Abort()
 
     if task and file:
         click.echo("Error: Cannot use both a task string and the --file argument.", err=True)
