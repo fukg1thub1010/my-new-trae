@@ -99,11 +99,14 @@ class TestCli(unittest.TestCase):
     @patch("trae_agent.cli.resolve_config_file", return_value="test_config.yaml")
     def test_run_with_both_task_and_file(self, mock_resolve_config_file):
         """Test for a clear error when both task string and --file are used."""
-        result = self.runner.invoke(cli, ["run", "some task", "--file", "task.txt"])
-        self.assertNotEqual(result.exit_code, 0)
-        self.assertIn(
-            "Error: Cannot use both a task string and the --file argument.", result.output
-        )
+        with self.runner.isolated_filesystem():
+            with open("task.txt", "w") as f:
+                f.write("task from file")
+            result = self.runner.invoke(cli, ["run", "some task", "--file", "task.txt"])
+            self.assertNotEqual(result.exit_code, 0)
+            self.assertIn(
+                "Error: Cannot use both a task string and the --file argument.", result.output
+            )
 
     def test_run_with_no_input(self):
         """Test for a clear error when neither task string nor --file is provided."""
