@@ -54,6 +54,9 @@ dependencies = [
     "click>=8.1",
 ]
 
+[project.scripts]
+trae-cli = "trae_agent.cli:cli"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
