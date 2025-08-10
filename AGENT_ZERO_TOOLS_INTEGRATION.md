@@ -48,7 +48,7 @@ All tools were adapted to conform to Trae Agent's tool interface:
 - Inherit from the `Tool` base class
 - Implement required methods (`get_name()`, `get_description()`, `get_parameters()`, `execute()`)
 - Use `ToolParameter` for parameter definitions
-- Return `ToolExecResult` objects
+- Return `dict` objects
 
 ### Docker Removal
 

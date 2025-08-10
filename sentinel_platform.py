@@ -17,7 +17,6 @@ import sys
 import logging
 import uuid
 import psutil
-import git
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Set
 from dataclasses import dataclass, asdict
@@ -26,7 +25,7 @@ from abc import ABC, abstractmethod
 import os
 
 # Add project root to path
-sys.path.insert(0, '/home/hidden/Desktop/trae-agent/trae-agent-trae-agent')
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 @dataclass
 class Event:
@@ -112,14 +111,13 @@ class LogRegexDetector(Detector):
         new_tags = set(event.tags)
         
         for issue_type, patterns in self.patterns.items():
-            for pattern in patterns:
-                if any(p.lower() in content.lower() for p in patterns):
-                    new_tags.add(issue_type)
-                    return event.evolve(
-                        tags=new_tags,
-                        root_cause=issue_type,
-                        confidence=0.8
-                    )
+            if any(p.lower() in content.lower() for p in patterns):
+                new_tags.add(issue_type)
+                return event.evolve(
+                    tags=new_tags,
+                    root_cause=issue_type,
+                    confidence=0.8
+                )
         
         return event
 
@@ -229,10 +227,10 @@ class SentinelCore:
     """Main sentinel orchestrator"""
     
     def __init__(self):
-        self.project_root = Path("/home/hidden/Desktop/trae-agent/trae-agent-trae-agent")
+        self.project_root = Path(__file__).resolve().parent
         self.trae_agent_path = self.project_root / "trae_agent"
         self.knowledge_base = SentinelKnowledgeBase(
-            self.project_root / "sentinel_memory"
+            self.trae_agent_path / "sentinel_memory"
         )
         self.detectors = []
         self.setup_logging()
@@ -433,6 +431,12 @@ def diagnose():
             click.echo(f"   🔗 {error}")
         for suggestion in result['import_issues']['suggestions']:
             click.echo(f"   💡 {suggestion}")
+
+    if result['test_results'].get('failures', 0) > 0:
+        click.echo(f"\n❌ Test Failures ({result['test_results']['failures']}):")
+        click.echo(result['test_results']['summary'])
+        for error in result['test_results']['errors']:
+            click.echo(f"   🔗 {error}")
     
     if result['knowledge_applied']:
         click.echo(f"\n🧠 Knowledge Base Solutions Applied ({len(result['knowledge_applied'])}):")
