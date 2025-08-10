@@ -29,7 +29,7 @@ class Agent:
     async def run(self, task):
         tool = self.tools["code_execution"]
         result = await tool.execute(runtime="terminal", code=task)
-        click.echo(result["output"])
+        click.echo(result.get("output", ""))
 
 import yaml
 

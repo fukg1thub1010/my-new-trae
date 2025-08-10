@@ -1,6 +1,7 @@
 import subprocess
 import subprocess
-from ..base import Tool, ToolResult
+from ..base import Tool
+from typing import Dict, Any
 
 class CodeExecutionTool(Tool):
     def __init__(self):
@@ -18,7 +19,7 @@ class CodeExecutionTool(Tool):
             "code": {"type": "string", "description": "The code to execute."}
         }
 
-    async def execute(self, **kwargs) -> ToolResult:
+    async def execute(self, **kwargs) -> Dict[str, Any]:
         runtime = kwargs.get("runtime")
         code = kwargs.get("code")
         session_id = kwargs.get("session_id", "default")
@@ -31,18 +32,18 @@ class CodeExecutionTool(Tool):
             result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
             output = result.stdout + result.stderr
             self.sessions[session_id]["history"].append(output)
-            return ToolResult(tool_name=self.get_name(), tool_output={"success": result.returncode == 0, "output": output})
+            return {"success": result.returncode == 0, "output": output}
         elif runtime == "nodejs":
             result = subprocess.run(["node", "-e", code], capture_output=True, text=True)
             output = result.stdout + result.stderr
             self.sessions[session_id]["history"].append(output)
-            return ToolResult(tool_name=self.get_name(), tool_output={"success": result.returncode == 0, "output": output})
+            return {"success": result.returncode == 0, "output": output}
         elif runtime == "terminal":
             result = subprocess.run(code, shell=True, capture_output=True, text=True)
             output = result.stdout + result.stderr
             self.sessions[session_id]["history"].append(output)
-            return ToolResult(tool_name=self.get_name(), tool_output={"success": result.returncode == 0, "output": output})
+            return {"success": result.returncode == 0, "output": output}
         elif runtime == "output":
-            return ToolResult(tool_name=self.get_name(), tool_output={"success": True, "output": "\n".join(self.sessions[session_id]["history"])})
+            return {"success": True, "output": "\n".join(self.sessions[session_id]["history"])}
         else:
-            return ToolResult(tool_name=self.get_name(), tool_output={"success": False, "output": f"Unknown runtime: {runtime}"})
+            return {"success": False, "output": f"Unknown runtime: {runtime}"}

@@ -50,13 +50,7 @@ uv pip install -e .
 
 # Install additional dependencies
 echo -e "${GREEN}📦 Installing additional dependencies...${NC}"
-uv pip install pytest pytest-asyncio
-uv pip install pywinauto
-uv pip install tree-sitter tree-sitter-python
-uv pip install httpx
-uv pip install redis
-uv pip install llama-index chromadb sentence-transformers pypdf
-uv pip install pyautogui
+uv pip install -r requirements.txt
 
 # Install system dependencies for Linux
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then

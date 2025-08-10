@@ -36,5 +36,5 @@ class Tool(ABC):
         pass
 
     @abstractmethod
-    async def execute(self, **kwargs) -> ToolResult:
+    async def execute(self, **kwargs) -> Dict[str, Any]:
         pass
