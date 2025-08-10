@@ -10,7 +10,7 @@ echo "Running comprehensive test suite..."
 
 # Run all tests
 echo "Running all tests..."
-python3 -m pytest trae_agent/ -v --tb=short
+python3 -m pytest -v --tb=short
 
 # Run Sentinel diagnostics
 echo "Running Sentinel diagnostics..."

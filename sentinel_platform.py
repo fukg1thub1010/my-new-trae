@@ -17,7 +17,6 @@ import sys
 import logging
 import uuid
 import psutil
-import git
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Set
 from dataclasses import dataclass, asdict
@@ -112,14 +111,13 @@ class LogRegexDetector(Detector):
         new_tags = set(event.tags)
         
         for issue_type, patterns in self.patterns.items():
-            for pattern in patterns:
-                if any(p.lower() in content.lower() for p in patterns):
-                    new_tags.add(issue_type)
-                    return event.evolve(
-                        tags=new_tags,
-                        root_cause=issue_type,
-                        confidence=0.8
-                    )
+            if any(p.lower() in content.lower() for p in patterns):
+                new_tags.add(issue_type)
+                return event.evolve(
+                    tags=new_tags,
+                    root_cause=issue_type,
+                    confidence=0.8
+                )
         
         return event
 
@@ -232,7 +230,7 @@ class SentinelCore:
         self.project_root = Path(__file__).resolve().parent
         self.trae_agent_path = self.project_root / "trae_agent"
         self.knowledge_base = SentinelKnowledgeBase(
-            self.project_root / "sentinel_memory"
+            self.trae_agent_path / "sentinel_memory"
         )
         self.detectors = []
         self.setup_logging()

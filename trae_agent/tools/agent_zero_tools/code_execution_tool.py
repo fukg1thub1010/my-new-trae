@@ -26,7 +26,8 @@ class CodeExecutionTool(Tool):
             self.sessions[session_id] = {"history": []}
 
         if runtime == "python":
-            result = subprocess.run(["python", "-c", code], capture_output=True, text=True)
+            import sys
+            result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
             output = result.stdout + result.stderr
             self.sessions[session_id]["history"].append(output)
             return {"success": result.returncode == 0, "output": output}
