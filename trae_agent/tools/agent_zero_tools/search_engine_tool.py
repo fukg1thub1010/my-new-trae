@@ -1,4 +1,4 @@
-from ..base import Tool
+from ..base import Tool, ToolResult
 
 class SearchEngineTool(Tool):
     def get_name(self) -> str:
@@ -12,6 +12,6 @@ class SearchEngineTool(Tool):
             "query": {"type": "string", "description": "The search query."}
         }
 
-    async def execute(self, **kwargs) -> dict:
+    async def execute(self, **kwargs) -> ToolResult:
         query = kwargs.get("query")
-        return {"success": True, "results": [f"Mock result for '{query}' 1", f"Mock result for '{query}' 2"]}
+        return ToolResult(tool_name=self.get_name(), tool_output={"success": True, "results": [f"Mock result for '{query}' 1", f"Mock result for '{query}' 2"]})

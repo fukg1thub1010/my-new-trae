@@ -1,4 +1,4 @@
-from ..base import Tool
+from ..base import Tool, ToolResult
 
 class InputTool(Tool):
     def get_name(self) -> str:
@@ -12,8 +12,8 @@ class InputTool(Tool):
             "command": {"type": "string", "description": "The command to execute."}
         }
 
-    async def execute(self, **kwargs) -> dict:
+    async def execute(self, **kwargs) -> ToolResult:
         command = kwargs.get("command")
         import subprocess
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
-        return {"success": result.returncode == 0, "output": result.stdout + result.stderr}
+        return ToolResult(tool_name=self.get_name(), tool_output={"success": result.returncode == 0, "output": result.stdout + result.stderr})
