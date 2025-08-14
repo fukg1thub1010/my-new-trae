@@ -3,7 +3,6 @@
 Comprehensive fix script for all Agent Zero tools syntax issues.
 """
 
-import os
 import re
 from pathlib import Path
 

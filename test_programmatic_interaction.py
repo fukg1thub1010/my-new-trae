@@ -2,7 +2,6 @@
 """Test script for ProgrammaticInteractionTool."""
 
 import asyncio
-import os
 import sys
 
 # Add current directory to path

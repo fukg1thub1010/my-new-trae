@@ -4,15 +4,10 @@ Ghidra MCP Server for Trae Agent Integration
 Provides HTTP API endpoints for programmatic Ghidra control
 """
 
-import os
-import sys
 import json
-import asyncio
-from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import threading
-import urllib.parse
 
 try:
     import pyghidra
@@ -288,10 +283,10 @@ def main():
     
     try:
         server.start()
-        print(f"🎉 Ghidra MCP Server ready!")
+        print("🎉 Ghidra MCP Server ready!")
         print(f"   Test with: curl -X POST http://{args.host}:{args.port}/command \\")
-        print(f"   -H 'Content-Type: application/json' \\")
-        print(f"   -d '{{\"command\":\"analyze_binary\",\"payload\":{{\"binary_path\":\"/bin/ls\"}}}}'")
+        print("   -H 'Content-Type: application/json' \\")
+        print("   -d '{\"command\":\"analyze_binary\",\"payload\":{\"binary_path\":\"/bin/ls\"}}'")
         
         # Keep server running
         while True:

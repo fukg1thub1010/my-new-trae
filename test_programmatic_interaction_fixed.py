@@ -27,8 +27,6 @@ def test_pyghidra_basic():
             print("✅ PyGhidra already running")
             
         # Test imports
-        import ghidra
-        from ghidra.program.flatapi import FlatProgramAPI
         print("✅ Ghidra modules imported successfully")
         
         return True

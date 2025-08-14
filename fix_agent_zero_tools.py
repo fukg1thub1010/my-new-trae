@@ -3,7 +3,6 @@
 Script to fix all agent-zero tools to work with Trae Agent's base classes.
 """
 
-import os
 import re
 from pathlib import Path
 
