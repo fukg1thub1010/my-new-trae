@@ -1,0 +1,83 @@
+schedules:
+- cron: "0 12 * * 0"
+  displayName: Weekly Sunday build
+  branches:
+    include:
+    - master
+  always: true
+
+variables:
+  CCACHE_DIR: $(Pipeline.Workspace)/cache
+  CHOCLATEY_CACHE_DIR: $(Pipeline.Workspace)/choclatey_cache
+  PREFIX: /usr/local/pharos-build
+  CXXFLAGS: -std=c++11 -D_GLIBCXX_USE_CXX11_ABI=1
+
+jobs:
+- job: Build_Prereqs
+  condition: and(succeeded(), variables.buildNormal)
+  timeoutInMinutes: 660
+  pool:
+    vmImage: 'Ubuntu-20.04'
+  steps:
+  - bash: |
+      set -e
+      sudo apt-get -y update
+      sudo apt-get install ccache -y
+      echo "##vso[task.prependpath]/usr/lib/ccache"
+    displayName: Install ccache and update PATH to use linked versions of gcc, cc, etc
+  - script: sudo apt-get -y install sudo build-essential wget flex ghostscript bzip2 git subversion automake libtool bison python libncurses-dev vim-common sqlite3 libsqlite3-0 libsqlite3-dev zlib1g-dev cmake libyaml-cpp-dev libxml2-dev ninja-build
+    displayName: Install prereqs
+  - script: sudo apt-get -y remove unixodbc-dev
+    displayName: Remove buggy Azure unixodbc-dev package until image is fixed
+  - task: Cache@2
+    inputs:
+      key: 'ccache | "$(Agent.OS)" | "$(PREFIX)" | "$(System.JobDisplayName)" | "$(CXXFLAGS)"'
+      path: $(CCACHE_DIR)
+    displayName: ccache
+  - bash: |
+      set -e
+      sudo mkdir $PREFIX
+      NCPU=2 COMPILE_BOOST=yes ./scripts/build_prereqs.bash -reclaim
+      # We have to make our own tar file here because Azure doesn't support symbolic links yet
+      sudo tar -cf local.tar -C $PREFIX .
+    displayName: Build prereqs
+    env:
+      PREFIX: $(PREFIX)
+      CXXFLAGS: $(CXXFLAGS)
+  - publish: local.tar
+    artifact: Prereqs
+
+- job: Build_Pharos
+  dependsOn: Build_Prereqs
+  timeoutInMinutes: 660
+  pool:
+    vmImage: 'Ubuntu-20.04'
+  steps:
+  - bash: |
+      set -e
+      sudo apt-get -y update
+      sudo apt-get install ccache -y
+      echo "##vso[task.prependpath]/usr/lib/ccache"
+    displayName: Install ccache and update PATH to use linked versions of gcc, cc, etc
+  - script: sudo apt-get -y install sudo build-essential wget flex ghostscript bzip2 git subversion automake libtool bison python libncurses-dev vim-common sqlite3 libsqlite3-0 libsqlite3-dev zlib1g-dev cmake libyaml-cpp-dev libxml2-dev ninja-build
+    displayName: Install prereqs
+
+  - task: Cache@2
+    inputs:
+      key: 'ccache | "$(Agent.OS)" | "$(System.Job.DisplayName)" | "$(CXXFLAGS)"'
+      path: $(CCACHE_DIR)
+    displayName: ccache
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      source: current
+      artifact: Prereqs
+  - bash: |
+      set -e
+      echo $PREFIX
+      sudo mkdir $PREFIX
+      sudo tar -xf ../local.tar -C $PREFIX
+      NCPU=2 ./scripts/build.bash -reclaim
+    env:
+      PREFIX: $(PREFIX)
+      CXXFLAGS: $(CXXFLAGS)
+    displayName: Build pharos

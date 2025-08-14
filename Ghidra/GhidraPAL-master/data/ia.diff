@@ -1,0 +1,32 @@
+1897c1897,1908
+<  # PF, AF not implemented
+---
+>  # AF not implemented
+>  # Rolf: changes here
+>  local ext1:8 = zext(result);
+>  local ext2 = ext1 >> 4;
+>  local ext3 = ext1 ^ ext2;
+>  local ext4 = ext3 >> 2;
+>  local ext5 = ext3 ^ ext4;
+>  local ext6 = ext5 >> 1;
+>  local ext7 = ext5 ^ ext6;
+>  local ext8:8 = 1;
+>  local ext9 = ext7 & ext8;
+>  PF = (ext9 == 0);
+1909c1920,1933
+<  # PF, AF not implemented
+---
+> 
+>  # Rolf: changes here
+>  local ext1:8 = zext(result);
+>  local ext2 = ext1 >> 4;
+>  local ext3 = ext1 ^ ext2;
+>  local ext4 = ext3 >> 2;
+>  local ext5 = ext3 ^ ext4;
+>  local ext6 = ext5 >> 1;
+>  local ext7 = ext5 ^ ext6;
+>  local ext8:8 = 1;
+>  local ext9 = ext7 & ext8;
+>  local newPF = (ext9 == 0);
+>  PF = (!notzero & PF) | (notzero & newPF);
+>  # AF not implemented

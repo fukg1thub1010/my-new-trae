@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -e
+set -x
+
+cmake -Bbuild -GNinja \
+	-DBUILD_CUTTER_PLUGIN=ON \
+	-DBUILD_SLEIGH_PLUGIN=ON \
+	-DCMAKE_INSTALL_PREFIX=$HOME/.local \
+	"$@"
+ninja -C build
+ninja -C build install
+
+cd test
+make

@@ -1,0 +1,38 @@
+name: ghidra-jython-kernel test
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: install kernel and test REPL
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+          architecture: 'x64'
+
+      - name: install python module
+        run: |
+          python -m pip install --upgrade pip
+          python setup.py install
+          pip install -e .
+          pip install pytest
+      
+      - if: success() # if install was success, process TEST
+        name: java setup
+        uses: actions/setup-java@v1 # use Java 11
+        with:
+          java-version: '11.0.x'
+          java-package: jdk
+          architecture: x64
+
+      - name: install ghidra
+        uses: er28-0652/setup-ghidra@master
+        with:
+          version: '9.1.1'
+
+      - if: success()
+        name: run test
+        run:
+          pytest -v tests

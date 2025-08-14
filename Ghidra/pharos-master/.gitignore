@@ -1,0 +1,53 @@
+# Standard things to ignore
+
+*~
+*.a
+*.o
+*.orig
+*.rej
+*.yaml.i
+TAGS
+
+# Auto-generated files
+*.pyc
+*.xwam
+
+# generated files and binaries
+/libpharos/PHAROS_REVISION
+/libpharos/PHAROS_REVISION.ii
+/libpharos/config.yaml.ii
+/tools/apianalyzer/apianalyzer
+/tools/apianalyzer/apisigtest
+/tools/apianalyzer/apitests1
+/tools/apianalyzer/apitests2
+/tools/apianalyzer/apitests3
+/tools/fn2hash/fn2hash
+/tools/fn2yara/fn2yara
+/tools/objdigger/objdigger
+
+# site.cmake is site-specific.  Do not check in.
+/site.cmake
+# Don't complain about the user file either.
+/local.cmake
+
+# test cruft
+/apitests.dot
+/tools/ooanalyzer/tests/**/*.ground.errors
+/tests/**/*.cvdump
+/tests/**/*.symbolspre
+/python/pharos/test/testpath.py
+
+# to support (& ignore) build dirs in the repo dir:
+/build
+/build-*
+/dist
+
+# local build overrides:
+local.cmake
+
+# other misc stuff
+**/.nfs*
+**/.tramp_history
+**/.tramp_ignore
+**/.gdb_history
+**/*/*.pdb

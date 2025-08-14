@@ -1,0 +1,266 @@
+NAME=x86:LE:32:default:gcc
+FILE=malloc://2048
+EXPECT=<<EOF
+ghidra
+x86:LE:32:default:
+32
+0x00000000 MOV ecx,esp
+type: mov
+----
+0x00000000 MOV eax,[0x804a068]
+type: load
+----
+0x00000000 MOV [0x804a068],eax
+type: store
+----
+0x00000000 MOV dword ptr [ebp + -0x10],eax
+type: store
+----
+0x00000000 MOV eax,dword ptr [ebp + 0x10]
+type: load
+----
+0x00000000 CMOVL ecx,dword ptr [0x3]
+type: load
+----
+0x00000000 INT 0x80
+type: icall
+----
+0x00000000 PUSH ebp
+type: rpush
+----
+0x00000000 PUSH 0x0
+type: upush
+----
+0x00000000 POP ebp
+type: pop
+----
+0x00000000 CMP eax,0x53
+type: cmp
+----
+0x00000000 TEST eax,eax
+type: acmp
+----
+0x00000000 ADD esp,0x10
+type: add
+----
+0x00000000 SUB esp,0x1088
+type: sub
+----
+0x00000000 IMUL edx
+type: mul
+----
+0x00000000 DIV edx
+type: mod
+----
+0x00000000 SHR eax,0x1
+type: shr
+----
+0x00000000 SHL eax,0x1
+type: shl
+----
+0x00000000 SAR eax,0x1
+type: sar
+----
+0x00000000 OR esp,dword ptr [0xfff0]
+type: or
+----
+0x00000000 AND esp,dword ptr [0xfff0]
+type: and
+----
+0x00000000 XOR esp,dword ptr [0xfff0]
+type: xor
+----
+0x00000000 XCHG dword ptr [ebx],eax
+type: xchg
+EOF
+CMDS=<<EOF
+e asm.arch=x86
+e asm.bits=32
+pdga
+e asm.arch
+e asm.cpu
+e asm.bits
+wx 89e1
+pdq 1
+ao | grep type
+echo ----
+wx a168a00408
+pdq 1
+ao | grep type
+echo ----
+wx a368a00408
+pdq 1
+ao | grep type
+echo ----
+wx 8945f0
+pdq 1
+ao | grep type
+echo ----
+wx 8b4510
+pdq 1
+ao | grep type
+echo ----
+wx 0f4c0d03000000
+pdq 1
+ao | grep type
+echo ----
+wx cd80
+pdq 1
+ao | grep type
+echo ----
+wx 55
+pdq 1
+ao | grep type
+echo ----
+wx 6a00
+pdq 1
+ao | grep type
+echo ----
+wx 5d
+pdq 1
+ao | grep type
+echo ----
+wx 83f853
+pdq 1
+ao | grep type
+echo ----
+wx 85c0
+pdq 1
+ao | grep type
+echo ----
+wx 83c410
+pdq 1
+ao | grep type
+echo ----
+wx 81ec88100000
+pdq 1
+ao | grep type
+echo ----
+wx f7ea
+pdq 1
+ao | grep type
+echo ----
+wx f7f2
+pdq 1
+ao | grep type
+echo ----
+wx d1e8
+pdq 1
+ao | grep type
+echo ----
+wx d1e0
+pdq 1
+ao | grep type
+echo ----
+wx d1f8
+pdq 1
+ao | grep type
+echo ----
+wx 0b25f0ff0000
+pdq 1
+ao | grep type
+echo ----
+wx 2325f0ff0000
+pdq 1
+ao | grep type
+echo ----
+wx 3325f0ff0000
+pdq 1
+ao | grep type
+echo ----
+wx 8703
+pdq 1
+ao | grep type
+EOF
+RUN
+
+NAME=AARCH64:LE:64:v8A:gcc
+FILE=malloc://2048
+EXPECT=<<EOF
+0x00000000 ldr x9, [x9, #0xf10]
+type: load
+----
+0x00000200 str x9, [x19]
+type: store
+EOF
+CMDS=<<EOF
+e asm.cpu=AARCH64:LE:64:v8A:gcc
+e asm.arch=ghidra
+wx 298947f9
+pdq 1
+ao | grep type
+echo ----
+wx 690200f9 @ 0x200
+pdq 1 @ 0x200
+ao @ 0x200| grep type
+EOF
+RUN
+
+NAME=v850cmp
+FILE==
+EXPECT=<<EOF
+ghidra
+V850:LE:32:default
+address: 0x0
+opcode: cmp r7, r6
+esilcost: 0
+disasm: cmp r7, r6
+mnemonic: cmp
+mask: ffff
+prefix: 0
+id: 0
+bytes: e731
+refptr: 0
+size: 2
+sign: true
+type: cmp
+cycles: 0
+esil: r7,NUM,r6,NUM,-,32,1,<<,1,SWAP,-,&,4294967287,psw,NUM,&,32,1,<<,1,SWAP,-,&,r7,NUM,r6,NUM,<,1,PICK,3,2,PICK,<<,32,1,<<,1,SWAP,-,&,1,PICK,5,PICK,|,32,1,<<,1,SWAP,-,&,psw,=,r6,NUM,r7,NUM,1,PICK,3,PICK,-,32,1,<<,1,SWAP,-,&,31,4,PICK,>>,32,1,<<,1,SWAP,-,&,1,PICK,0,SWAP,>>,8,1,<<,1,SWAP,-,&,31,5,PICK,>>,32,1,<<,1,SWAP,-,&,1,PICK,0,SWAP,>>,8,1,<<,1,SWAP,-,&,31,6,PICK,>>,32,1,<<,1,SWAP,-,&,1,PICK,0,SWAP,>>,8,1,<<,1,SWAP,-,&,1,2,PICK,&,8,1,<<,1,SWAP,-,&,4294967291,psw,NUM,&,32,1,<<,1,SWAP,-,&,5,PICK,8,PICK,==,!,3,PICK,7,PICK,==,1,PICK,3,PICK,&,8,1,<<,1,SWAP,-,&,1,PICK,2,2,PICK,<<,32,1,<<,1,SWAP,-,&,1,PICK,7,PICK,|,32,1,<<,1,SWAP,-,&,psw,=,4294967293,psw,NUM,&,32,1,<<,1,SWAP,-,&,0,23,PICK,32,SWAP,SIGN,SWAP,32,SWAP,SIGN,SWAP,<,1,PICK,1,2,PICK,<<,32,1,<<,1,SWAP,-,&,1,PICK,5,PICK,|,32,1,<<,1,SWAP,-,&,psw,=,4294967294,psw,NUM,&,32,1,<<,1,SWAP,-,&,0,27,PICK,==,1,PICK,1,PICK,4,PICK,|,32,1,<<,1,SWAP,-,&,psw,=,CLEAR
+family: cpu
+EOF
+CMDS=<<EOF
+e asm.arch=ghidra
+e asm.cpu=v850
+e asm.parser=v850.pseudo
+e asm.bits=32
+pdga
+e analysis.arch
+e analysis.cpu
+wx e731
+ao 1
+EOF
+RUN
+
+NAME=v850load
+FILE==
+EXPECT=<<EOF
+ghidra
+V850:LE:32:default
+address: 0x0
+opcode: ld.w 0x4[r29], r11
+esilcost: 4
+disasm: ld.w 0x4[r29], r11
+mnemonic: ld.w
+mask: ffffffff
+prefix: 0
+id: 0
+bytes: 3d5f0500
+refptr: 0
+size: 4
+sign: true
+type: load
+cycles: 0
+esil: 4,r29,NUM,+,32,1,<<,1,SWAP,-,&,1,PICK,[4],r11,=,CLEAR
+family: cpu
+EOF
+CMDS=<<EOF
+e asm.arch=ghidra
+e asm.cpu=v850
+e asm.bits=32
+pdga
+e analysis.arch
+e analysis.cpu
+wx 3d5f0500
+ao 1
+EOF
+RUN

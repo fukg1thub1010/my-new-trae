@@ -1,0 +1,40 @@
+pharos:
+  verbosity:                    # an integer value 1-14, higher number chattier
+  partitioner: "pharos"
+  partitioner_semantics: true   # affects partioner version 2
+  library:
+  prolog_dir: @SWI_INSTALL_DIR@
+  prolog_rules_dir:
+  apidb: [ apidb/pharos-api-additions.json, apidb/pharos-apidb.sqlite ]
+  timeout: 0.0
+  per_function_timeout: 60.0
+  partitioner_timeout: 0.0
+  maximum_memory: 8000.0
+  per_function_maximum_memory: 100.0
+  maximum_instructions_per_block: 3000
+  maximum_iterations_per_function: 3000
+  # The maximum number of nodes allowed in ITE conditions before
+  # substituting with a new dummy value
+  maximum_nodes_per_condition: 500
+  typedb: [ typedb/types.json ]
+  concurrency_level: 1
+  allow_non_pe: true
+  function_tags: {}
+
+# application specific overrides, based on the executable name
+application:
+  ooanalyzer:
+    prolog-loglevel:
+    prolog_stack_limit: 100000000000
+    prolog_table_space: 100000000000
+    pharos:
+      allow_non_pe: false
+  apianalyzer:
+    signature_file: "apianalyzer/sig.json"
+  fn2yara:
+    pharos:
+      allow-64bit: true
+  fn2hash:
+    pharos:
+      verbosity:
+      allow-64bit: true

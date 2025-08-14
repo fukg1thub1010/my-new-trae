@@ -1,0 +1,11 @@
+set(testconfig_file "${CMAKE_CURRENT_BINARY_DIR}/testconfig.yaml")
+set(TESTCONFIG_FILE ${testconfig_file} PARENT_SCOPE)
+set(TESTCONFIG_SWITCH --config "${testconfig_file}" PARENT_SCOPE)
+message(STATUS "Making ${testconfig_file}")
+configure_file(testconfig.yaml.in "${testconfig_file}")
+
+find_package(SWIPL REQUIRED)
+set(compare_facts "${CMAKE_CURRENT_BINARY_DIR}/comparefacts.sh")
+set(COMPARE_FACTS ${compare_facts} PARENT_SCOPE)
+message(STATUS "Making ${compare_facts}")
+configure_file(comparefacts.sh.in "${compare_facts}" @ONLY)

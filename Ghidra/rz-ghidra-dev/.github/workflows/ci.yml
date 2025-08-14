@@ -1,0 +1,86 @@
+name: CI
+on:
+  push:
+    branches:
+      - dev
+      - stable
+  pull_request:
+
+env:
+  ARTIFACT_NAME: rz-ghidra-git
+  RIZIN_INSTALL_PREFIX: ${{ github.workspace }}/rizin-prefix
+  CUTTER_INSTALL_PATH: ${{ github.workspace }}/cutter
+  RIZIN_PLUGIN_PATH: /rizin/lib/plugins
+  CUTTER_PLUGIN_PATH: /cutter/plugins/native
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Buster / default
+            image: buster
+            args:
+          - name: Arch / GENERATE_PARSERS=ON + optional executables
+            image: arch
+            args: -DGENERATE_PARSERS=ON -DBUILD_DECOMPILE_EXECUTABLE=ON -DBUILD_DECOMPILE_CLI_EXECUTABLE=ON
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Checkout submodules
+        run: |
+            git submodule init
+            git submodule update
+      - name: Docker Build
+        run: cd scripts && docker build -t rz-ghidra . -f Dockerfile.${{ matrix.image }} && cd ..
+      - name: Build and Test
+        run: docker run --rm -v "`pwd`:/build" -t rz-ghidra /bin/bash -c "cd /build && scripts/ci-script ${{ matrix.args }}"
+  windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+          submodules: recursive
+    - uses: actions/setup-python@v4
+    - name: Preparing msvc toolchain
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install meson ninja PyYAML
+    - uses: actions/checkout@v3
+      with:
+          repository: rizinorg/rizin
+          path: rizin
+    - name: Extract rizin version
+      shell: pwsh
+      run: echo "branch=$(python sys/version.py)" >> $Env:GITHUB_OUTPUT
+      id: extract_version
+      working-directory: rizin
+    - name: Build with meson + ninja
+      shell: pwsh
+      run: |
+        dist\windows\vsdevenv.ps1 64
+        meson --buildtype=release --prefix="${{ env.RIZIN_INSTALL_PREFIX }}" build
+        ninja -C build
+        ninja -C build install
+      working-directory: rizin
+    - name: Build Rz-Ghidra
+      shell: pwsh
+      run: |
+        rizin\dist\windows\vsdevenv.ps1 64
+        $env:ARTIFACT_PATH = "${{ github.workspace }}\${{ env.ARTIFACT_NAME }}"
+        $env:PATH = "$env:PATH;C:$env:HOMEPATH\AppData\Local\Programs\rizin\bin"
+        $env:PKG_CONFIG_PATH = "C:$env:HOMEPATH\AppData\Local\Programs\rizin\lib\pkgconfig"
+        $env:PKG_CONFIG_PATH
+        pkg-config --list-all
+        mkdir build
+        cd build
+        cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${{ env.RIZIN_INSTALL_PREFIX }};${{ env.RIZIN_INSTALL_PREFIX }}\include\librz;${{ env.RIZIN_INSTALL_PREFIX }}\include\librz\sdb" -DCMAKE_INSTALL_PREFIX=${{ env.ARTIFACT_PATH }} -DBUILD_CUTTER_PLUGIN=OFF -DBUILD_SLEIGH_PLUGIN=OFF -DRIZIN_INSTALL_PLUGDIR=${{ env.RIZIN_PLUGIN_PATH }}
+        cmake --build . --config Release
+        cmake --build . --config Release --target install
+

@@ -1,0 +1,2 @@
+pharos:
+  library: @CMAKE_SOURCE_DIR@/share

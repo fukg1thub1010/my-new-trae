@@ -1,0 +1,381 @@
+=pod
+
+=head1 NAME
+
+B<fn2hash> - Function hashing and code similarity
+
+=head1 SYNOPSIS
+
+fn2hash [--min-instructions=NUMBER] [--extra-data] [--basic-blocks]
+  [--json=FILENAME] [--pretty-json[=INDENT]]
+  [...Pharos options...] EXECUTABLE_FILE
+
+fn2hash --help
+
+fn2hash --rose-version
+
+@PHAROS_OPTS_POD@
+
+=head1 DESCRIPTION
+
+B<fn2hash> calculates various function hashes for the functions in a
+program and dumps the data to stdout in the following CSV format:
+
+=over 4
+
+filemd5, fn_addr, exact_hash, pic_hash,  num_bytes, num_instructions, num_code_blocks, num_data_blocks
+
+=back
+
+where those columns are:
+
+=over 4
+
+=item B<filemd5>
+
+The MD5 hash of the input file.
+
+=item B<fn_addr>
+
+The address of this function.
+
+=item B<exact_hash>
+
+The MD5 of the bytes of the function concatenated in flow order.
+
+=item B<pic_hash>
+
+Basically the same as the B<exact_hash>, but address references (except local
+relative ones) are replaced with 0 values before hashing.  The goal is to
+account for functions that are effectively exactly identical except for
+references to locations in memory (other functions, imports, global data
+addresses, etc) that might change with occurances in different programs.
+
+=item B<num_bytes>
+
+The number of bytes that make up the instructions in the function.
+
+=item B<num_instructions>
+
+The number of instructions in the function.
+
+=item B<num_code_blocks>
+
+The number of code blocks (basic blocks) in the function.
+
+=item B<num_data_blocks>
+
+The number of data blocks in the function.
+
+=item B<exact_bytes>
+
+The bytes that generate the B<exact_hash> when the MD5 is calculated.  These are
+the bytes of the functions instructions in address order.
+
+=item B<pic_bytes>
+
+The bytes that generate the B<pic_hash> when the MD5 is calculated.  These are
+the bytes of the function instructions in address order, with bytes representing
+addresses replaced with zeros.
+
+=back
+
+If the B<--json> option is specified, fn2hash will generate JSON output format
+instead with those same fields.  When the B<--extra-data> option is specified,
+the fn2hash JSON output will also contain the following additional fields:
+
+=over 4
+
+=item B<composite_pic_hash>
+
+A variant of the B<pic_hash> that does not include bytes for control flow
+related instructions, and the hash is computed by computing the MD5 of each
+basic block separately (minus the control flow related bytes), and those basic
+block MD5s are ordered and concatenated, and that resulting string is hashed.
+The goal is to account for minor differences in output at compile time, like for
+instance the compiler deciding to use B<jz> instead of B<jnz> and reordering the
+otherwise identical basic blocks because of that.
+
+=item B<cf_exact_hash>
+
+The control flow ordering version of the B<exact_hash>.  This ordering was the
+default ordering for the exact hash prior to June 2024.  This ordering increased
+the complexity of the algorithm, but did not improve the usefulness of the hash.
+This hash is provided for backwards compatibility.
+
+=item B<cf_pic_hash>
+
+The control flow ordering version of the B<pic_hash>.  This ordering was the
+default ordering for the exact hash prior to June 2024.  This ordering increased
+the complexity of the algorithm, but did not improve the usefulness of the hash
+due to technical details of how the hash was calculated, specifically the
+inclusion of control flow instructions at the end of each block.  This hash is
+provided for backwards compatibility.
+
+=item B<cf_exact_bytes>
+
+The bytes that generate the B<cf_exact_hash> when the MD5 is calculated.  These
+are the bytes of the functions instructions in an order that is dependent on the
+control flow of the function.
+
+=item B<cf_pic_bytes>
+
+The bytes that generate the B<cf_pic_hash> when the MD5 is calculated.  These
+are the bytes of the function instructions in an order that is dependent on the
+control flow of the function, with bytes representing addresses replaced with
+zeros.
+
+=item B<num_basic_blocks>
+
+The number of blocks (code and data blocks) in the function.  The mildly
+confusing name is retained for backwards compatibility.  The newer fields
+B<num_code_blocks> and B<num_data_blocks> should be used when possible.
+
+=item B<num_basic_blocks_in_cfg>
+
+The number of those blocks that are actually in the control flow graph of the
+function.  This should generally match the number of code blocks in the function
+unless there is unusual control flow in the function.
+
+=item B<mnemonic_hash>
+
+Like the B<exact_hash> but instead of concatenating the bytes of the
+instructions to hash, the mnemonics for the instructions are concatenated
+instead (without operands) and hashed.
+
+=item B<mnemonic_count_hash>
+
+This is a hash of a vector of ordered pairs of mnemonics and the number of
+occurances of that mnemonic in the function.
+
+=item B<mnemonic_category_hash>
+
+Like the B<mnemonic_hash> but the mnemonics are mapped to a smaller set of
+categories instead.  The categories are:
+
+=over 4
+
+=item XFER
+
+Data transfer insns (eg: B<mov, push, xchg>).
+
+=item MATH
+
+Arithmetic insns (eg: B<add, sub, lea>).
+
+=item LOGIC
+
+Bitwise operations (eg: B<and, or, not, xor, shl, ror>).
+
+=item CMP
+
+Comparison insns (eg: B<test, cmp>).
+
+=item BR
+
+Branching insns (eg: B<jmp, jcc, call>).
+
+=item FLT
+
+Floating point insns (eg: B<fadd, fmul, fld>).
+
+=item SIMD
+
+SIMD (MMX/SSE* related) insn (eg: B<addps, mulss, psadbw>).
+
+=item CRYPTO
+
+Insn to aid in cryptography (AES and SHA) calculations (eg: B<aesdec, sha256rnds2>).
+
+=item VMM
+
+Virtual Machine Monitory (hypervisor) related insns.
+
+=item SYS
+
+Various "system" level and privileged insns (eg: B<int, sysenter>).
+
+=item STR
+
+String related functions (eg: B<movsb>).
+
+=item I/O
+
+Port related insn (eg: B<in, out, insb, outsb>).
+
+=item UNCAT
+
+Any insns that haven't been assigned to one of the above categories.
+
+=back
+
+=item B<mnemonic_category_counts_hash>
+
+Like B<mnemonic_count_hash> but using the mnemonic categories instead of mnemonics.
+
+=item B<mnemonic_counts>
+
+The data used to generate the mnemonic count hash.
+
+=item B<mnemonic_category_counts>
+
+The data used to generate the mnemonic category counts hash.
+
+=item B<mnemonic_category_count_string>
+
+The actual vector used in B<mnemonic_category_count_hash>.
+
+=back
+
+If the B<--basic-blocks> option is specified in addition to B<--extra-data> and
+B<--json>, then the JSON output will also contain the following fields:
+
+=over 4
+
+=item B<opt_basic_block_data>
+
+Metadata about each basic block in the function.
+
+=over 4
+
+=item B<address>
+
+The starting address for the basic block.
+
+=item B<pic_hash>
+
+The PIC hash algorithm applied to the basic block.
+
+=item B<composite_pic_hash>
+
+The composite PIC hash algorithm (excluding control flow instruction) for the
+basic block.
+
+=item B<num_instructions>
+
+The number of instructions in the basic block.
+
+=item B<mnemonics>
+
+The category and mnemonic for each instruction in the block.
+
+=back
+
+=item B<opt_bb_cfg>
+
+This list describes the edges of the control flow graph for the function.  Each
+entry is a pair of addresses indicating where control flow is B<from> and
+B<to>. Note that if there is only one basic block in the function, this list
+will be empty.
+
+=back
+
+Note that since the file MD5 is the first column in the output, that the fn2hash
+output for multiple files can be combined easily, if desired.  Might be
+convenient for working with data from related sets of files.
+
+=head1 OPTIONS
+
+=head2 B<fn2hash> OPTIONS
+
+The following options are specific to the B<fn2hash> program.
+
+=over 4
+
+=item B<--min-instructions>=I<NUMBER>, B<-m>=I<NUMBER>
+
+Minimum number of instructions needed to output data for a function, so
+functions below this instruction count will not appear in the output.
+
+=item B<--extra-data>, B<-E>
+
+This option enables reporting of additional data in the JSON output (see
+description above for the details of the additional fields).
+
+=item B<--basic-blocks>, B<-B>
+
+The -B option adds basic block data to the JSON output.  The B<--extra-data>
+option must also be specified.
+
+=item B<--json>=I<FILENAME>, B<-j>=I<FILENAME>
+
+Output hash information in JSON format to I<FILENAME>. If I<FILENAME>
+is C<->, JSON will output to stdout.
+
+=item B<--pretty-json>[=I<INDENT>], B<-p>[=I<INDENT>]
+
+When outputting JSON, use newlines and indentation, making the output
+human-readable.  I<INDENT> is the indentation level, and defaults to
+C<4>.
+
+=back
+
+@PHAROS_OPTIONS_POD@
+
+=head1 EXAMPLES
+
+ $ fn2hash tests/ooex_vs2010/Debug/ooex1.exe >ooex1.fn2hash.csv
+ $ head -n3 ooex1.fn2hash.csv
+ 1D28A053B8AD17E213278A05C5709E33,0x00411550,8E0F497DD360FC22C70B30C750A4727C,8E0F497DD360FC22C70B30C750A4727C,61,24,1,1
+ 1D28A053B8AD17E213278A05C5709E33,0x004115A0,26E9F99BDB8200116761D199F8F08D16,26E9F99BDB8200116761D199F8F08D16,54,23,1,1
+ 1D28A053B8AD17E213278A05C5709E33,0x004117FC,7651D12A0F1701880EB69780CC9DEF85,89047698F4380796A13F674942384C0D,6,1,1,0
+ 
+ $ fn2hash --pretty-json=2 --json=ooex1.fn2hash.json tests/ooex_vs2010/Debug/ooex1.exe
+ $ head -n12 ooex1.fn2hash.json
+ {
+   "analysis": [
+     {
+       "exact_hash": "8E0F497DD360FC22C70B30C750A4727C",
+       "filemd5": "1D28A053B8AD17E213278A05C5709E33",
+       "fn_addr": "0x00411550",
+       "num_bytes": 61,
+       "num_code_blocks": 1,
+       "num_data_blocks": 1,
+       "num_instructions": 24,
+       "pic_hash": "8E0F497DD360FC22C70B30C750A4727C"
+     },
+ 
+ $ fn2hash --pretty-json=4 --extra-data --basic-blocks --json=ooex1.fn2hash.json tests/ooex_vs2010/Debug/ooex1.exe
+ $ file ooex1.fn2hash.json
+ ooex1.fn2hash.json: JSON data
+ 
+=head1 ENVIRONMENT
+
+=over 4
+
+@PHAROS_ENV_POD@
+
+=back
+
+=head1 FILES
+
+=over 4
+
+@PHAROS_FILES_POD@
+
+=back
+
+=for compiled
+head1 NOTES
+
+=head1 AUTHOR
+
+Written by the Software Engineering Institute at Carnegie Mellon
+University.  The primary author was Charles Hines.
+
+=head1 COPYRIGHT
+
+Copyright 2024 Carnegie Mellon University.  All rights reserved.  This
+software is licensed under a "BSD" license.  Please see I<LICENSE.txt>
+for details.
+
+=head1 SEE ALSO
+
+See fse.py and possibly fn2yara.
+
+=cut
+
+Local Variables:
+mode:text
+indent-tabs-mode:nil
+End:

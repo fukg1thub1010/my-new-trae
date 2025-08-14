@@ -1,0 +1,217 @@
+#!/usr/bin/env python3
+
+from __future__ import print_function
+import argparse
+import re
+import sys
+
+# based on https://www.oreilly.com/library/view/python-cookbook/0596001673/ch03s15.html
+
+class Xlator(dict):
+    """ All-in-one multiple-string-substitution class """
+    def _make_regex(self):
+        """ Build re object based on the keys of the current dictionary """
+        return re.compile("|".join(map(re.escape, self.keys(  ))))
+
+    def __call__(self, match):
+        """ Handler invoked for each regex match """
+        return self[match.group(0)]
+
+    def __init__(self, myd):
+        super(Xlator, self).__init__(myd)
+        self.regex = self._make_regex()
+
+    def xlat(self, text):
+        """ Translate text, returns the modified text. """
+        return self.regex.sub(self, text)
+
+regexp_replace = [
+    ("complete(, .*seconds elapsed).", 1, ""),
+    ("took (.*) seconds.", 1, "X"),
+    ("Analyzing executable: (.*/)?tests", 1, ""),
+    ("Loaded API database: (.*/)?", 1, ""),
+    ("to JSON file:? '?(.*/)?tests", 1, "")
+]
+regexp_replace = [(re.compile(rx), n, r) for (rx, n, r) in regexp_replace]
+
+fixups = [
+    # Just to save a little more space on the screen...
+    ('public: ', ''),
+    ('private: ', ''),
+    # These are for when have std templates in the output...
+    ('struct std::char_traits<char>', 'CHAR_TRAITS'),
+    ('class std::allocator<char>', 'CHAR_ALLOC'),
+
+    ('basic_streambuf<char, CHAR_TRAITS>', 'basic_char_streambuf'),
+    ('basic_istream<char, CHAR_TRAITS>', 'basic_char_istream'),
+    ('istreambuf_iterator<char, CHAR_TRAITS>', 'istreambuf_char_iter'),
+    ('basic_ostream<char, CHAR_TRAITS>', 'basic_char_ostream'),
+    ('ostreambuf_iterator<char, CHAR_TRAITS>', 'ostreambuf_char_iter'),
+    ('basic_ios<char, CHAR_TRAITS>', 'basic_char_ios'),
+
+    ('basic_string<char, CHAR_TRAITS, CHAR_ALLOC>', 'basic_char_string'),
+    ('basic_stringbuf<char, CHAR_TRAITS, CHAR_ALLOC>', 'basic_char_stringbuf'),
+    ('_String_iterator<char, CHAR_TRAITS, CHAR_ALLOC>', '_string_iter'),
+    ('_String_const_iterator<char, CHAR_TRAITS, CHAR_ALLOC>', '_string_const_iter'),
+    ('_String_val<char, CHAR_ALLOC>', '_string_val'),
+
+    ('pair<class std::basic_char_string const, class std::basic_char_string>', 'string_pair'),
+    ('less<class std::basic_char_string>', 'less<str>'),
+    ('class std::allocator<struct std::string_pair>', 'STR_PAIR_ALLOC'),
+
+    ('_Tmap_traits<class std::basic_char_string, class std::basic_char_string, struct std::less<str>, STR_PAIR_ALLOC, 0', '_Tmap_traits<str, str>'),
+
+    ('map<class std::basic_char_string, class std::basic_char_string, struct std::less<str>, STR_PAIR_ALLOC>', 'map<str, str>'),
+
+    ('_Tree_val<class std::_Tmap_traits<str, str>>', '_Tree_val<str, str>'),
+    ('_Tree_const_iterator<class std::_Tree_val<str, str>>>', '_Tree_const_iter<str, str>'),
+    ('_Tree_nod<class std::_Tmap_traits<str, str>>', '_Tree_nod<str, str>'),
+    ('_Tree_unchecked_const_iterator<class std::_Tree_val<str, str> >', '_Tree_unch_iter<str, str>'),
+
+    ('_Pair_base<class std::basic_char_string, class std::basic_char_string>', '_Pair_base<str, str>'),
+]
+fixups = [(re.compile(re.escape(a)), b) for (a,b) in fixups]
+
+def fixup_ugly_symbols(symbol):
+    # XXX Use xlator
+    for (old, new) in fixups:
+        symbol = re.sub(old, new, symbol, count=99)
+    return symbol
+
+# ===========================================================================
+# Build the symbol map from a .ground file
+# ===========================================================================
+def build_symbol_map_from_ground_file(ground_file):
+    addr2symbol = {}
+    try:
+        f = open(ground_file, 'r')
+        lines = f.readlines()
+    except:
+        print ("Error opening " + ground_file)
+        assert (False)
+
+    gtline = re.compile (r"^groundTruth\((0x[^,]+), '([^']+)', '([^']+)', ([^,]+), ([^,]+), ([^,]+), ([^,]+), ([^,]+), '([^']+)'\).$")
+
+    for l in lines:
+        l = l.rstrip()
+
+        m = gtline.match (l)
+
+        if m is not None:
+            addr = m.group(1)
+            addr = int(addr, 16)
+            #print (addr)
+
+            classname = m.group(2)
+            methodname = m.group(3)
+
+            symbol = "0x%08X %s::%s" % (addr, classname, methodname)
+
+            addr2symbol[addr] = symbol
+
+    return addr2symbol
+
+# ===========================================================================
+# Build the symbol map.
+# ===========================================================================
+def build_symbol_map(symbols_file):
+    addr2symbol = {}
+    try:
+        symbolHnd = open(symbols_file, 'r')
+        lines = symbolHnd.readlines()
+    except:
+        print ("Error opening " + symbols_file)
+        assert (False)
+
+    for l in lines:
+        l = l.rstrip()
+        if len(l) == 0: continue
+
+        try:
+            (addr, isthunk, idasymbol, symbol) = l.split(None, 3)
+        except ValueError:
+            print ("Bad line: %s" % l, file=sys.stderr)
+            raise
+
+        addr = int(addr, 16)
+        if symbol != 'None':
+            addr2symbol[addr] = "0x%08X %s" % (addr, fixup_ugly_symbols(symbol))
+        else:
+            addr2symbol[addr] = "0x%08X %s" % (addr, idasymbol)
+        #print str(addr) + " : " + symbol + " => " + addr2symbol[addr]
+
+    symbolHnd.close()
+    return addr2symbol
+
+# ===========================================================================
+# Now do the substitutions.
+# ===========================================================================
+def postprocess_oo_output(input_file, output_file, addr2symbol):
+
+    d = {"0x%08X" % addr: sym for addr, sym in addr2symbol.items ()}
+    d.update ({"0x%x" % addr: sym for addr, sym in addr2symbol.items ()})
+
+    xlat = Xlator(d)
+
+    for l in input_file:
+
+        #print "Examining: " + l
+
+        # Hide variations in timing.
+        if l.endswith('seconds elapsed.\n'):
+            l = re.sub('complete, .* seconds elapsed.', 'complete.', l)
+        # Hide variations in timing.
+        if l.endswith('seconds.\n'):
+            l = re.sub('complete, analyzed .* functions in .* seconds.', 'took X seconds.', l)
+        # Hide version number changes.
+        if l.startswith('OPTI[INFO ]: Object Digger version'):
+            l = re.sub('version .*.$', 'version X.', l)
+        # Hide different progress reporting in partitioner 2
+        if l.startswith('PRT2[MARCH]: cfg'):
+            # Just skip these lines entirely since there might be different numbers of them
+            continue
+
+        # Don't be picky about exactly where the Prolog files were exported to.
+        pos = l.find('Prolog facts to ')
+        if pos != -1:
+            l = l[0:pos] + 'Prolog facts to ...\n'
+        pos = l.find('Prolog results to ')
+        if pos != -1:
+            l = l[0:pos] + 'Prolog results to ...\n'
+
+        # Apply regexp replacements
+        for rx, n, r in regexp_replace:
+            match = rx.search(l)
+            if match and match.group(n):
+                l = "".join((l[:match.start(n)], r, l[match.end(n):]))
+
+        # Do we have a any variables?
+        if l.find('=v') != -1 or l.find(' v') != -1:
+            # If so normalize them.
+            l = re.sub(r'v[0-9a-f]*\[', 'v?[', l)
+
+        l = xlat.xlat (l)
+
+        print (l, end="", file=output_file)
+
+parser = argparse.ArgumentParser(description='Symbolize addresses')
+parser.add_argument('symbols-file', type=str,
+                    help='path to the symbols file')
+parser.add_argument('input-file', type=str, nargs='?',
+                    help='path to the input file (or stdin if not specified)')
+parser.add_argument('--output-file', '-o', type=str,
+                    help='path to the output file (or stdout if not specified')
+
+args = vars(parser.parse_args())
+#print(args)
+
+try:
+    m = build_symbol_map (args["symbols-file"])
+except ValueError:
+    m = build_symbol_map_from_ground_file (args["symbols-file"])
+
+input_file = open(args["input-file"], "r") if args["input-file"] is not None else sys.stdin
+#print(input_file)
+output_file = open(args["output_file"], "w") if args["output_file"] is not None else sys.stdout
+postprocess_oo_output (input_file, output_file, m)
+output_file.close ()

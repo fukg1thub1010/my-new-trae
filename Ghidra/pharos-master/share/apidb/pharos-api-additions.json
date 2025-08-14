@@ -1,0 +1,13 @@
+[
+{
+  "dll": "OBSCURE32.DLL",
+  "export_name": "SomeFunction",
+  "display_name": "SomeFunction",
+  "convention": "stdcall",
+  "parameters": [
+     {"name": "dwFirstParam", "type": "DWORD", "inout": "in"}
+  ],
+  "type": "void",
+  "ordinal": 123
+}
+]

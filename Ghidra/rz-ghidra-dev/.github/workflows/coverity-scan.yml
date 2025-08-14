@@ -1,0 +1,78 @@
+name: coverity-scan
+on:
+  schedule:
+    - cron: '0 9 * * 1,5' # Bi-weekly at 09:00 UTC on Monday and Thursday
+
+jobs:
+  latest:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.10.x
+
+      - name: Download Coverity Build Tool
+        run: |
+          wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=$TOKEN&project=rizinorg%2Frz-ghidra" -O cov-analysis-linux64.tar.gz
+          mkdir cov-analysis-linux64
+          tar xzf cov-analysis-linux64.tar.gz --strip 1 -C cov-analysis-linux64
+        env:
+          TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+
+      - name: Fixed world writable dirs
+        run: |
+          chmod go-w $HOME
+          sudo chmod -R go-w /usr/share
+
+      - name: apt dependencies
+        run: sudo apt-get install ninja-build libgraphviz-dev bison flex qtbase5-dev qt5-qmake cmake
+
+      - name: py dependencies
+        run: |
+          pip install meson
+
+      - name: Prepare Rizin
+        run: |
+          export INSTALL_PREFIX=${GITHUB_WORKSPACE}/rizin-prefix
+          git clone --depth 1 https://github.com/rizinorg/rizin
+          cd rizin && mkdir build && cd build
+          meson --prefix="${INSTALL_PREFIX}" ..
+          ninja
+          ninja install
+
+      - name: CMake
+        run: |
+          export INSTALL_PREFIX=${GITHUB_WORKSPACE}/rizin-prefix
+          export PKG_CONFIG_PATH=${INSTALL_PREFIX}/lib/pkgconfig:${INSTALL_PREFIX}/lib/$(uname -m)-linux-gnu/pkgconfig:${PKG_CONFIG_PATH}
+          mkdir build && cd build
+          cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$INSTALL_PREFIX;/opt/qt512" \
+            -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX" \
+            -DBUILD_CUTTER_PLUGIN=OFF \
+            -DBUILD_SLEIGH_PLUGIN=ON \
+            ..
+
+      - name: Build with cov-build
+        run: |
+          export PATH=`pwd`/cov-analysis-linux64/bin:$PATH
+          cd build
+          cov-build --dir cov-int make
+
+      - name: Submit the result to Coverity Scan
+        run: |
+          cd build
+          tar czvf rz-ghidra.tgz cov-int
+          curl \
+            --form project=“rizinorg%2Frz-ghidra” \
+            --form token=$TOKEN \
+            --form email=noreply@rizin.re \
+            --form file=@rz-ghidra.tgz \
+            --form version=trunk \
+            --form description="rz-ghidra" \
+            https://scan.coverity.com/builds?project=rizinorg%2Frz-ghidra
+        env:
+          TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
