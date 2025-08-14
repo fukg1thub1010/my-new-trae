@@ -1,14 +1,50 @@
+from importlib import metadata
 from typing import Dict, Type
 from .base import Tool
 
 _tool_registry: Dict[str, Type[Tool]] = {}
 
-def register_tool(tool_class: Type[Tool]):
-    tool_name = tool_class().get_name()
-    _tool_registry[tool_name] = tool_class
+def discover_tools() -> Dict[str, Type[Tool]]:
+    """Discovers tools using the 'eta.tools' entry point."""
+    tools = {}
+    # Compatibility for Python < 3.10
+    all_entry_points = metadata.entry_points()
+    if isinstance(all_entry_points, dict):
+        # Python 3.9 or older with importlib_metadata
+        entry_points = all_entry_points.get("eta.tools", [])
+    else:
+        # Python 3.10+
+        entry_points = all_entry_points.select(group="eta.tools")
 
-def list_tools():
-    return list(_tool_registry.keys())
+    for entry_point in entry_points:
+        try:
+            tool_class = entry_point.load()
+            tools[entry_point.name] = tool_class
+        except Exception as e:
+            # Handle cases where a plugin fails to load
+            print(f"Error loading tool '{entry_point.name}': {e}")
+    return tools
+
+def get_tool_registry() -> Dict[str, Type[Tool]]:
+    """
+    Returns the tool registry, discovering tools on first call.
+    This is a singleton pattern.
+    """
+    global _tool_registry
+    if not _tool_registry:
+        _tool_registry = discover_tools()
+    return _tool_registry
+
+def list_tools() -> list[str]:
+    """Returns a list of available tool names."""
+    return list(get_tool_registry().keys())
 
 def get_tool(tool_name: str) -> Type[Tool]:
-    return _tool_registry[tool_name]
+    """
+    Retrieves a tool class from the registry by its name.
+    Raises KeyError if the tool is not found.
+    """
+    try:
+        return get_tool_registry()[tool_name]
+    except KeyError:
+        raise KeyError(f"Tool '{tool_name}' not found in the registry.")

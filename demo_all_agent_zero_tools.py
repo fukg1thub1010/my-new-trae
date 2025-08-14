@@ -15,16 +15,9 @@ import os
 from trae_agent.tools import (
     # Original 13 tools
     CodeExecutionTool,
-    InputTool,
     SearchEngineTool,
     MemorySaveTool,
     MemoryLoadTool,
-    MemoryDeleteTool,
-    MemoryForgetTool,
-    ResponseTool,
-    ProgressTool,
-    BehaviourAdjustmentTool,
-    DocumentQueryTool,
     LoggerTool,
     ShortTermMemoryTool,
     
@@ -94,8 +87,8 @@ async def demo_all_tools():
     try:
         result = await vision_load.execute(image_path=tmp_path)
         print(f"   ✓ Success: {result.success}")
-        print(f"   ✓ Format: PNG (simulated)")
-        print(f"   ✓ Size: 100 bytes (simulated)")
+        print("   ✓ Format: PNG (simulated)")
+        print("   ✓ Size: 100 bytes (simulated)")
     finally:
         os.unlink(tmp_path)
     
@@ -152,12 +145,12 @@ async def demo_all_tools():
     # LoggerTool
     logger = LoggerTool()
     await logger.execute(action="demo", details="Demo completed")
-    print(f"   ✓ LoggerTool: Success")
+    print("   ✓ LoggerTool: Success")
     
     # ShortTermMemoryTool
     stm = ShortTermMemoryTool()
     await stm.execute(interaction_type="demo", content="Demo interaction")
-    print(f"   ✓ ShortTermMemoryTool: Success")
+    print("   ✓ ShortTermMemoryTool: Success")
     
     print("\n" + "=" * 50)
     print("✅ All 20 Agent-Zero tools successfully integrated!")

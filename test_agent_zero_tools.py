@@ -8,10 +8,6 @@ from trae_agent.tools.agent_zero_tools.input_tool import InputTool
 from trae_agent.tools.agent_zero_tools.search_engine_tool import SearchEngineTool
 from trae_agent.tools import tools_registry
 
-tools_registry.register_tool(CodeExecutionTool)
-tools_registry.register_tool(InputTool)
-tools_registry.register_tool(SearchEngineTool)
-
 async def test_tool_registration():
     """Test that all agent-zero tools are properly registered."""
     print("Testing tool registration...")

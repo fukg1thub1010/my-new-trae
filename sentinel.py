@@ -14,14 +14,11 @@ Usage:
 """
 
 import ast
-import os
 import sys
-import json
 import click
 import subprocess
-import traceback
 from pathlib import Path
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any
 
 
 class Sentinel:
@@ -91,7 +88,6 @@ class Sentinel:
         
         for proto_file in proto_files:
             proto_dir = proto_file.parent
-            proto_name = proto_file.name
             
             # Build regeneration command
             cmd = [
@@ -153,7 +149,7 @@ class Sentinel:
         try:
             import trae_agent
             import_path = Path(trae_agent.__file__).parent
-            if not str(self.trae_agent_path) in str(import_path):
+            if str(self.trae_agent_path) not in str(import_path):
                 issues.append("Project not installed in editable mode")
         except ImportError:
             issues.append("trae_agent package not importable")

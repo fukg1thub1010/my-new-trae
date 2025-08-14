@@ -10,7 +10,6 @@ import click
 import asyncio
 import json
 import yaml
-import time
 import subprocess
 import ast
 import sys
@@ -22,7 +21,6 @@ from typing import Dict, List, Any, Optional, Set
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from abc import ABC, abstractmethod
-import os
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -426,7 +424,7 @@ def diagnose():
             click.echo(f"   📄 {error['file']}:{error['line']} - {error['message']}")
     
     if result['import_issues'].get('has_import_errors'):
-        click.echo(f"\n❌ Import Issues:")
+        click.echo("\n❌ Import Issues:")
         for error in result['import_issues']['errors']:
             click.echo(f"   🔗 {error}")
         for suggestion in result['import_issues']['suggestions']:
@@ -455,7 +453,7 @@ def status():
     cpu_percent = psutil.cpu_percent(interval=1)
     memory = psutil.virtual_memory()
     
-    click.echo(f"💻 System Resources:")
+    click.echo("💻 System Resources:")
     click.echo(f"   CPU: {cpu_percent:.1f}%")
     click.echo(f"   Memory: {memory.percent:.1f}% ({memory.used / 1024**3:.1f}GB / {memory.total / 1024**3:.1f}GB)")
     

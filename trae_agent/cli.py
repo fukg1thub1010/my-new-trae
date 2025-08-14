@@ -1,8 +1,12 @@
 import asyncio
 import os
 from unittest.mock import MagicMock
+import yaml
 
 import click
+
+from .tools.agent_zero_tools.code_execution_tool import CodeExecutionTool
+
 
 class ConsoleFactory:
     @staticmethod
@@ -17,8 +21,6 @@ def resolve_config_file(config_file):
         return "trae_config.yaml"
     return config_file
 
-from .tools.agent_zero_tools.code_execution_tool import CodeExecutionTool
-
 class Agent:
     def __init__(self, config):
         self.config = config
@@ -30,8 +32,6 @@ class Agent:
         tool = self.tools["code_execution"]
         result = await tool.execute(runtime="terminal", code=task)
         click.echo(result["output"])
-
-import yaml
 
 class Config:
     def __init__(self, config_file):
@@ -89,8 +89,6 @@ def run(task, file, working_dir, config_file):
 
     config_file = resolve_config_file(config_file)
     config = Config.create(config_file)
-    recorder = TrajectoryRecorder("trajectory.json")
-    console = ConsoleFactory.create_console()
     agent = Agent(config)
     asyncio.run(agent.run(task))
 

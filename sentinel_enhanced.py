@@ -8,9 +8,7 @@ successful fix to build institutional knowledge.
 """
 
 import click
-import asyncio
 import json
-import time
 import subprocess
 import ast
 import sys
@@ -19,9 +17,6 @@ from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from datetime import datetime
 import logging
-import uuid
-import psutil
-import git
 
 # Add project root to path
 sys.path.insert(0, '/home/hidden/Desktop/trae-agent/trae-agent-trae-agent')
