@@ -7,8 +7,10 @@ from unittest.mock import MagicMock
 
 import click
 import yaml
+import json
 
 from .tools.agent_zero_tools.code_execution_tool import CodeExecutionTool
+from .tools.bash_tool import BashTool
 from .providers.pollinations import PollinationsClient
 
 
@@ -30,13 +32,64 @@ class Agent:
     def __init__(self, config):
         self.config = config
         self.tools = {
-            "code_execution": CodeExecutionTool()
+            "code_execution": CodeExecutionTool(),
+            "bash": BashTool(),
         }
+        self.provider = "pollinations"
 
-    async def run(self, task):
-        tool = self.tools["code_execution"]
-        result = await tool.execute(runtime="terminal", code=task)
-        click.echo(result["output"])
+    def _build_system_prompt(self) -> str:
+        return (
+            "You are Trae Agent. When asked to perform actions, decide whether to call a tool.\n"
+            "Respond with a single JSON object, no extra text, using this schema:\n"
+            '{ "tool": "bash" | "code_execution" | null, "args": { ... }, "final": "string" }\n'
+            "- For bash: args = {\"command\": \"...\"}\n"
+            "- For code_execution (terminal): args = {\"runtime\": \"terminal\", \"code\": \"...\"}\n"
+            "If no tool is needed, set tool to null and provide a helpful 'final' message.\n"
+        )
+
+    async def run(self, task: str):
+        # Resolve model/base_url from config
+        cfg = self.config
+        provider_cfg = cfg.get_provider(self.provider) if hasattr(cfg, 'get_provider') else {}
+        api_key = provider_cfg.get("api_key")
+        base_url = provider_cfg.get("base_url")
+        model = cfg.get_default_model(self.provider) if hasattr(cfg, 'get_default_model') else None
+        if not model:
+            raise click.ClickException(
+                "No default model configured for provider 'pollinations'. "
+                "Use 'trae llm' to test or add a default model in trae_config.yaml."
+            )
+
+        client = PollinationsClient(api_key=api_key, base_url=base_url)
+        system = self._build_system_prompt()
+        reply = client.chat(task, model=model, system=system)
+
+        # Parse potential tool call
+        tool_name = None
+        args = {}
+        final = None
+        try:
+            parsed = json.loads(reply)
+            tool_name = parsed.get("tool")
+            args = parsed.get("args") or {}
+            final = parsed.get("final")
+        except Exception:
+            # Not JSON - treat as final answer
+            final = reply
+
+        if tool_name:
+            if tool_name not in self.tools:
+                raise click.ClickException(f"Tool '{tool_name}' not available.")
+            if tool_name == "code_execution" and "runtime" not in args:
+                # default to terminal if missing; run the task if no code provided
+                args["runtime"] = "terminal"
+                args["code"] = args.get("code") or task
+            result = await self.tools[tool_name].execute(**args)
+            click.echo(result.get("output", ""))
+            return
+
+        # No tool requested: print final text
+        click.echo(final or reply)
 
 class Config:
     def __init__(self, data: dict | None):
