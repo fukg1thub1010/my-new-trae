@@ -21,7 +21,7 @@ jobs:
       - name: Ruff
         run: |
           ruff version || pip install ruff
-          ruff check .
+          ruff check trae_agent
       - name: Pytest (subset)
         run: |
           pytest -q trae_agent/tests

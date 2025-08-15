@@ -161,7 +161,7 @@ class Config:
 
     def get_default_model(self, name: str) -> Optional[str]:
         # Try to find a model entry referencing this provider
-        for model_name, spec in (self.config.get("models") or {}).items():
+        for spec in (self.config.get("models") or {}).values():
             if spec.get("model_provider") == name:
                 return spec.get("model")
         return None
