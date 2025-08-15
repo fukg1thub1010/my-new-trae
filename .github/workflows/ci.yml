@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, mentat-*, feature/* ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Show environment
+        run: |
+          set -eux
+          python -V
+          pip -V
+          pwd
+          ls -la
+      - name: Install minimal deps
+        run: |
+          set -eux
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e . --no-deps
+          pip install pytest ruff click PyYAML httpx
+          pip list
+      - name: Ruff
+        run: |
+          set -eux
+          ruff version || pip install ruff
+          ruff check trae_agent -v
+      - name: Pytest (subset)
+        env:
+          PYTHONPATH: .
+        run: |
+          set -eux
+          pytest -vv trae_agent/tests

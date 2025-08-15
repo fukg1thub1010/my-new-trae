@@ -1,0 +1,5 @@
+Streaming in PollinationsClient:
+- Use OpenAI-compatible /chat/completions with stream=true
+- Parse event-stream lines starting with "data: "
+- Each data line is a JSON with choices[0].delta.content
+- Finish when a line with [DONE] is received

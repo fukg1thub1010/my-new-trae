@@ -86,8 +86,14 @@ disallow_untyped_defs = true
 
 [project.scripts]
 trae = "trae_agent.cli:cli"
+trae-cli = "trae_agent.cli:cli"
 
 [project.entry-points."eta.tools"]
 code_execution = "trae_agent.tools.agent_zero_tools.code_execution_tool:CodeExecutionTool"
 input = "trae_agent.tools.agent_zero_tools.input_tool:InputTool"
 search_engine = "trae_agent.tools.agent_zero_tools.search_engine_tool:SearchEngineTool"
+bash = "trae_agent.tools.bash_tool:BashTool"
+file_edit = "trae_agent.tools.file_edit_tool:FileEditTool"
+json_edit = "trae_agent.tools.json_edit_tool:JSONEditTool"
+sequentialthinking = "trae_agent.tools.sequential_thinking_tool:SequentialThinkingTool"
+task_done = "trae_agent.tools.task_done_tool:TaskDoneTool"
