@@ -12,6 +12,7 @@ import json
 from .tools.agent_zero_tools.code_execution_tool import CodeExecutionTool
 from .tools.bash_tool import BashTool
 from .providers.pollinations import PollinationsClient
+from .trajectory import TrajectoryRecorder
 
 
 class ConsoleFactory:
@@ -29,8 +30,9 @@ def resolve_config_file(config_file: str | None) -> str | None:
     return config_file
 
 class Agent:
-    def __init__(self, config):
+    def __init__(self, config, recorder: TrajectoryRecorder | None = None):
         self.config = config
+        self.recorder = recorder
         self.tools = {
             "code_execution": CodeExecutionTool(),
             "bash": BashTool(),
@@ -49,6 +51,8 @@ class Agent:
 
     async def run(self, task: str):
         # Resolve model/base_url from config
+        if self.recorder:
+            self.recorder.record("start", {"task": task})
         cfg = self.config
         provider_cfg = cfg.get_provider(self.provider) if hasattr(cfg, 'get_provider') else {}
         api_key = provider_cfg.get("api_key")
@@ -63,6 +67,8 @@ class Agent:
         client = PollinationsClient(api_key=api_key, base_url=base_url)
         system = self._build_system_prompt()
         reply = client.chat(task, model=model, system=system)
+        if self.recorder:
+            self.recorder.record("llm_response", {"raw": reply})
 
         # Parse potential tool call
         tool_name = None
@@ -84,7 +90,11 @@ class Agent:
                 # default to terminal if missing; run the task if no code provided
                 args["runtime"] = "terminal"
                 args["code"] = args.get("code") or task
+            if self.recorder:
+                self.recorder.record("tool_call", {"tool": tool_name, "args": args})
             result = await self.tools[tool_name].execute(**args)
+            if self.recorder:
+                self.recorder.record("tool_result", {"tool": tool_name, "result": result})
             click.echo(result.get("output", ""))
             return
 
@@ -147,7 +157,8 @@ def cli():
 @click.option("--file", type=click.Path())
 @click.option("--working-dir", type=click.Path())
 @click.option("--config-file", type=click.Path())
-def run(task, file, working_dir, config_file):
+@click.option("--trajectory-file", type=click.Path(), help="Write trajectory to this file (JSONL).")
+def run(task, file, working_dir, config_file, trajectory_file):
     """Run a task"""
 
     if not task and not file:
@@ -174,8 +185,10 @@ def run(task, file, working_dir, config_file):
 
     config_file = resolve_config_file(config_file)
     config = Config.create(config_file)
-    agent = Agent(config)
+    recorder = TrajectoryRecorder(trajectory_file) if trajectory_file else TrajectoryRecorder()
+    agent = Agent(config, recorder=recorder)
     asyncio.run(agent.run(task))
+    click.echo(f"\n[trajectory] {recorder.path()}")
 
 @cli.command()
 def interactive():
