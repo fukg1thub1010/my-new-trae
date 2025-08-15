@@ -11,6 +11,10 @@ import json
 
 from .tools.agent_zero_tools.code_execution_tool import CodeExecutionTool
 from .tools.bash_tool import BashTool
+from .tools.file_edit_tool import FileEditTool
+from .tools.json_edit_tool import JSONEditTool
+from .tools.sequential_thinking_tool import SequentialThinkingTool
+from .tools.task_done_tool import TaskDoneTool
 from .providers.pollinations import PollinationsClient
 from .providers.pollinations_stream import stream_chat
 from .trajectory import TrajectoryRecorder
@@ -31,12 +35,17 @@ def resolve_config_file(config_file: str | None) -> str | None:
     return config_file
 
 class Agent:
-    def __init__(self, config, recorder: TrajectoryRecorder | None = None):
+    def __init__(self, config, recorder: TrajectoryRecorder | None = None, max_steps: int = 0):
         self.config = config
         self.recorder = recorder
+        self.max_steps = max_steps
         self.tools = {
             "code_execution": CodeExecutionTool(),
             "bash": BashTool(),
+            "file_edit": FileEditTool(),
+            "json_edit": JSONEditTool(),
+            "sequentialthinking": SequentialThinkingTool(),
+            "task_done": TaskDoneTool(),
         }
         self.provider = "pollinations"
 
@@ -157,9 +166,6 @@ class Config:
                 return spec.get("model")
         return None
 
-class TrajectoryRecorder:
-    def __init__(self, trajectory_file):
-        pass
 
 @click.group()
 def cli():
@@ -202,7 +208,7 @@ def run(task, file, working_dir, config_file, trajectory_file, max_steps):
     config_file = resolve_config_file(config_file)
     config = Config.create(config_file)
     recorder = TrajectoryRecorder(trajectory_file) if trajectory_file else TrajectoryRecorder()
-    agent = Agent(config, recorder=recorder)
+    agent = Agent(config, recorder=recorder, max_steps=max_steps)
     asyncio.run(agent.run(task))
     click.echo(f"\n[trajectory] {recorder.path()}")
 
