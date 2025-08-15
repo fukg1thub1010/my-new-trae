@@ -96,8 +96,6 @@ def cli():
 @click.option("--config-file", type=click.Path())
 def run(task, file, working_dir, config_file):
     """Run a task"""
-    # Basic logging setup for CLI runs
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
     if not task and not file:
         click.echo("Error: Provide a task or use --file to specify input.", err=True)

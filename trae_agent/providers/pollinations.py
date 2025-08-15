@@ -73,5 +73,3 @@ class PollinationsClient:
                     time.sleep(retry_backoff ** attempt)
                 else:
                     raise
-        # Should never reach
-        raise RuntimeError(f"Failed after retries: {last_err}")
