@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, mentat-*, feature/* ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install project (dev)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+      - name: Ruff
+        run: |
+          ruff version || pip install ruff
+          ruff check .
+      - name: Pytest (subset)
+        run: |
+          pytest -q trae_agent/tests

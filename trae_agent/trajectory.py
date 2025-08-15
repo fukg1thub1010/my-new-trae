@@ -20,7 +20,7 @@ class TrajectoryRecorder:
 
     def _default_path(self) -> str:
         ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        return os.path.join("trae_agent", "trajectories", f"trajectory_{ts}.jsonl")
+        return os.path.join("trajectories", f"trajectory_{ts}.jsonl")
 
     def record(self, event: str, payload: Optional[Dict[str, Any]] = None) -> None:
         entry = {

@@ -12,6 +12,7 @@ import json
 from .tools.agent_zero_tools.code_execution_tool import CodeExecutionTool
 from .tools.bash_tool import BashTool
 from .providers.pollinations import PollinationsClient
+from .providers.pollinations_stream import stream_chat
 from .trajectory import TrajectoryRecorder
 
 
@@ -41,11 +42,15 @@ class Agent:
 
     def _build_system_prompt(self) -> str:
         return (
-            "You are Trae Agent. When asked to perform actions, decide whether to call a tool.\n"
-            "Respond with a single JSON object, no extra text, using this schema:\n"
-            '{ "tool": "bash" | "code_execution" | null, "args": { ... }, "final": "string" }\n'
-            "- For bash: args = {\"command\": \"...\"}\n"
-            "- For code_execution (terminal): args = {\"runtime\": \"terminal\", \"code\": \"...\"}\n"
+            "You are Trae Agent. Decide whether to call a tool and respond ONLY with JSON (no prose).\n"
+            "Schema: { \"tool\": \"bash\"|\"code_execution\"|\"file_edit\"|\"json_edit\"|\"sequentialthinking\"|\"task_done\"|null,\n"
+            "          \"args\": { ... }, \"final\": \"string or null\" }\n"
+            "- bash: args={\"command\":\"...\"}\n"
+            "- code_execution: args={\"runtime\":\"terminal\",\"code\":\"...\"}\n"
+            "- file_edit: args={\"path\":\"...\",\"content\":\"...\",\"mode\":\"write|append\"}\n"
+            "- json_edit: args={\"path\":\"...\",\"key\":\"a.b.c\",\"value\":\"...\"}\n"
+            "- sequentialthinking: args={\"steps\":\"...\"}\n"
+            "- task_done: args={\"message\":\"...\"}\n"
             "If no tool is needed, set tool to null and provide a helpful 'final' message.\n"
         )
 
@@ -66,40 +71,50 @@ class Agent:
 
         client = PollinationsClient(api_key=api_key, base_url=base_url)
         system = self._build_system_prompt()
-        reply = client.chat(task, model=model, system=system)
-        if self.recorder:
-            self.recorder.record("llm_response", {"raw": reply})
 
-        # Parse potential tool call
-        tool_name = None
-        args = {}
-        final = None
-        try:
-            parsed = json.loads(reply)
-            tool_name = parsed.get("tool")
-            args = parsed.get("args") or {}
-            final = parsed.get("final")
-        except Exception:
-            # Not JSON - treat as final answer
-            final = reply
-
-        if tool_name:
-            if tool_name not in self.tools:
-                raise click.ClickException(f"Tool '{tool_name}' not available.")
-            if tool_name == "code_execution" and "runtime" not in args:
-                # default to terminal if missing; run the task if no code provided
-                args["runtime"] = "terminal"
-                args["code"] = args.get("code") or task
+        steps = 0
+        last_output = ""
+        while True:
+            if self.max_steps and steps >= self.max_steps:
+                break
+            prompt = task if steps == 0 else f"Continue. Last result:\n{last_output}\nReturn next JSON tool call or final."
+            reply = client.chat(prompt, model=model, system=system)
             if self.recorder:
-                self.recorder.record("tool_call", {"tool": tool_name, "args": args})
-            result = await self.tools[tool_name].execute(**args)
-            if self.recorder:
-                self.recorder.record("tool_result", {"tool": tool_name, "result": result})
-            click.echo(result.get("output", ""))
-            return
+                self.recorder.record("llm_response", {"raw": reply, "step": steps})
 
-        # No tool requested: print final text
-        click.echo(final or reply)
+            tool_name = None
+            args = {}
+            final = None
+            try:
+                parsed = json.loads(reply)
+                tool_name = parsed.get("tool")
+                args = parsed.get("args") or {}
+                final = parsed.get("final")
+            except Exception:
+                final = reply
+
+            if tool_name:
+                if tool_name not in self.tools:
+                    raise click.ClickException(f"Tool '{tool_name}' not available.")
+                if tool_name == "code_execution" and "runtime" not in args:
+                    args["runtime"] = "terminal"
+                    args["code"] = args.get("code") or task
+                if self.recorder:
+                    self.recorder.record("tool_call", {"tool": tool_name, "args": args, "step": steps})
+                result = await self.tools[tool_name].execute(**args)
+                if self.recorder:
+                    self.recorder.record("tool_result", {"tool": tool_name, "result": result, "step": steps})
+                output = result.get("output", "")
+                click.echo(output)
+                last_output = output
+                steps += 1
+                if tool_name == "task_done":
+                    break
+                continue
+
+            # No tool: print final and stop
+            click.echo(final or reply)
+            break
 
 class Config:
     def __init__(self, data: dict | None):
@@ -158,7 +173,8 @@ def cli():
 @click.option("--working-dir", type=click.Path())
 @click.option("--config-file", type=click.Path())
 @click.option("--trajectory-file", type=click.Path(), help="Write trajectory to this file (JSONL).")
-def run(task, file, working_dir, config_file, trajectory_file):
+@click.option("--max-steps", type=int, default=0, help="Max agent steps (0 = unlimited).")
+def run(task, file, working_dir, config_file, trajectory_file, max_steps):
     """Run a task"""
 
     if not task and not file:
@@ -208,7 +224,8 @@ def show_config():
 @click.argument("prompt", required=True)
 @click.option("--model", help="Model name to use (OpenAI-compatible).")
 @click.option("--base-url", help="Override base URL (OpenAI-compatible API).")
-def llm(prompt, model, base_url):
+@click.option("--stream", is_flag=True, help="Stream the response tokens.")
+def llm(prompt, model, base_url, stream):
     """Send a single prompt to the configured LLM provider (Pollinations)."""
     cfg = Config.create(resolve_config_file(None))
     provider_cfg = cfg.get_provider("pollinations")
@@ -223,8 +240,13 @@ def llm(prompt, model, base_url):
     except ValueError as e:
         click.echo(f"Error: {e}", err=True)
         raise click.Abort()
-    out = client.chat(prompt, model=final_model)
-    click.echo(out)
+    if stream:
+        for chunk in stream_chat(client, prompt, model=final_model):
+            click.echo(chunk, nl=False)
+        click.echo()
+    else:
+        out = client.chat(prompt, model=final_model)
+        click.echo(out)
 
 
 if __name__ == '__main__':
