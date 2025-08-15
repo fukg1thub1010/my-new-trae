@@ -1,9 +1,11 @@
 import asyncio
+import logging
 import os
+from pathlib import Path
 from unittest.mock import MagicMock
-import yaml
 
 import click
+import yaml
 
 from .tools.agent_zero_tools.code_execution_tool import CodeExecutionTool
 
@@ -16,9 +18,10 @@ class ConsoleFactory:
         mock_console.set_agent_context = MagicMock()
         return mock_console
 
-def resolve_config_file(config_file):
+def resolve_config_file(config_file: str | None) -> str | None:
     if not config_file:
-        return "trae_config.yaml"
+        default = "trae_config.yaml"
+        return default if Path(default).exists() else None
     return config_file
 
 class Agent:
@@ -34,20 +37,28 @@ class Agent:
         click.echo(result["output"])
 
 class Config:
-    def __init__(self, config_file):
-        with open(config_file, 'r') as f:
-            self.config = yaml.safe_load(f)
+    def __init__(self, data: dict | None):
+        self.config = data or {}
 
-    def resolve_config_values(self):
+    def resolve_config_values(self) -> "Config":
+        # Placeholder for env overlay/validation hook
+        # In follow-ups, merge env vars into config as needed.
         return self
 
     @property
     def trae_agent(self):
-        return self.config.get('agents', {}).get('trae_agent', {})
+        return self.config.get("agents", {}).get("trae_agent", {})
 
     @staticmethod
-    def create(config_file):
-        return Config(config_file)
+    def create(config_file: str | None) -> "Config":
+        data = {}
+        if config_file and Path(config_file).exists():
+            try:
+                with open(config_file, "r") as f:
+                    data = yaml.safe_load(f) or {}
+            except Exception as e:
+                logging.getLogger(__name__).warning("Failed to load config '%s': %s", config_file, e)
+        return Config(data).resolve_config_values()
 
 class TrajectoryRecorder:
     def __init__(self, trajectory_file):
@@ -65,8 +76,11 @@ def cli():
 @click.option("--config-file", type=click.Path())
 def run(task, file, working_dir, config_file):
     """Run a task"""
+    # Basic logging setup for CLI runs
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+
     if not task and not file:
-        click.echo("Error: Config file not found.", err=True)
+        click.echo("Error: Provide a task or use --file to specify input.", err=True)
         raise click.Abort()
 
     if task and file:
@@ -84,7 +98,7 @@ def run(task, file, working_dir, config_file):
         try:
             os.chdir(working_dir)
         except FileNotFoundError:
-            click.echo("Error changing directory", err=True)
+            click.echo(f"Error: Working directory not found: {working_dir}", err=True)
             raise click.Abort()
 
     config_file = resolve_config_file(config_file)
@@ -95,12 +109,17 @@ def run(task, file, working_dir, config_file):
 @cli.command()
 def interactive():
     """Start an interactive session"""
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     click.echo("Starting an interactive session...")
 
 @cli.command()
 def show_config():
     """Show the current configuration"""
-    click.echo("Showing the current configuration...")
+    cfg = Config.create(resolve_config_file(None))
+    if not cfg.config:
+        click.echo("No configuration file found. Using defaults/environment.")
+        return
+    click.echo(yaml.safe_dump(cfg.config, sort_keys=False))
 
 if __name__ == '__main__':
     cli()

@@ -1,6 +1,9 @@
 from importlib import metadata
-from typing import Dict, Type
+import logging
+from typing import Dict, Type, List
 from .base import Tool
+
+logger = logging.getLogger(__name__)
 
 _tool_registry: Dict[str, Type[Tool]] = {}
 
@@ -21,8 +24,8 @@ def discover_tools() -> Dict[str, Type[Tool]]:
             tool_class = entry_point.load()
             tools[entry_point.name] = tool_class
         except Exception as e:
-            # Handle cases where a plugin fails to load
-            print(f"Error loading tool '{entry_point.name}': {e}")
+            # Handle cases where a plugin fails to load without cluttering stdout
+            logger.warning("Error loading tool '%s': %s", entry_point.name, e)
     return tools
 
 def get_tool_registry() -> Dict[str, Type[Tool]]:
@@ -35,7 +38,7 @@ def get_tool_registry() -> Dict[str, Type[Tool]]:
         _tool_registry = discover_tools()
     return _tool_registry
 
-def list_tools() -> list[str]:
+def list_tools() -> List[str]:
     """Returns a list of available tool names."""
     return list(get_tool_registry().keys())
 
@@ -46,5 +49,5 @@ def get_tool(tool_name: str) -> Type[Tool]:
     """
     try:
         return get_tool_registry()[tool_name]
-    except KeyError:
-        raise KeyError(f"Tool '{tool_name}' not found in the registry.")
+    except KeyError as e:
+        raise KeyError(f"Tool '{tool_name}' not found in the registry.") from e

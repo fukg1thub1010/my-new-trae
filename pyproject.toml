@@ -86,6 +86,7 @@ disallow_untyped_defs = true
 
 [project.scripts]
 trae = "trae_agent.cli:cli"
+trae-cli = "trae_agent.cli:cli"
 
 [project.entry-points."eta.tools"]
 code_execution = "trae_agent.tools.agent_zero_tools.code_execution_tool:CodeExecutionTool"
